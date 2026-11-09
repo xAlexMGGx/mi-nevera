@@ -4,10 +4,330 @@
     "tagline": "Qué comida hay, cuánta y cuándo caduca.",
     "loading": "Cargando…"
   },
+  "common": {
+    "back": "Volver",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "change": "Cambiar",
+    "retry": "Reintentar",
+    "increase": "Aumentar",
+    "decrease": "Reducir",
+    "loadError": "No se ha podido cargar. Comprueba tu conexión."
+  },
   "language": {
     "label": "Idioma",
     "es": "Español",
     "en": "English"
+  },
+  "nav": {
+    "label": "Navegación principal",
+    "inventory": "Inventario",
+    "add": "Añadir"
+  },
+  "zones": {
+    "fridge": "Frigo",
+    "freezer": "Congelador",
+    "pantry": "Despensa"
+  },
+  "categories": {
+    "dairy_eggs": "Lácteos y huevos",
+    "meat": "Carne",
+    "fish": "Pescado y marisco",
+    "fruit": "Fruta",
+    "vegetables": "Verdura y hortalizas",
+    "bread": "Pan y bollería",
+    "pasta_rice_legumes": "Pasta, arroz y legumbres",
+    "canned": "Conservas",
+    "frozen": "Congelados",
+    "drinks": "Bebidas",
+    "sauces": "Salsas, aceites y condimentos",
+    "snacks": "Snacks y dulces",
+    "breakfast": "Desayuno",
+    "cooked": "Platos cocinados",
+    "other": "Otros"
+  },
+  "units": {
+    "unit_one": "unidad",
+    "unit_other": "unidades",
+    "piece_one": "pieza",
+    "piece_other": "piezas",
+    "egg_one": "huevo",
+    "egg_other": "huevos",
+    "yogurt_one": "yogur",
+    "yogurt_other": "yogures",
+    "brick_one": "brick",
+    "brick_other": "bricks",
+    "bottle_one": "botella",
+    "bottle_other": "botellas",
+    "can_one": "lata",
+    "can_other": "latas",
+    "jar_one": "bote",
+    "jar_other": "botes",
+    "package_one": "paquete",
+    "package_other": "paquetes",
+    "bag_one": "bolsa",
+    "bag_other": "bolsas",
+    "tray_one": "bandeja",
+    "tray_other": "bandejas",
+    "box_one": "caja",
+    "box_other": "cajas",
+    "loaf_one": "barra",
+    "loaf_other": "barras",
+    "serving_one": "ración",
+    "serving_other": "raciones"
+  },
+  "contentUnits": {
+    "g": "g",
+    "kg": "kg",
+    "ml": "ml",
+    "l": "l",
+    "ud": "ud."
+  },
+  "quantityKinds": {
+    "count": "Por unidades (huevos, latas…)",
+    "divisible": "Envases con contenido (bricks, paquetes…)",
+    "bulk": "A granel o por peso (tomates, queso…)"
+  },
+  "dateTypes": {
+    "expiry": "Caducidad",
+    "best_before": "Consumo preferente"
+  },
+  "status": {
+    "expired": "Caducado",
+    "review": "Revisar",
+    "soon": "Pronto",
+    "reviewNote": "Pasado el consumo preferente: revisa antes de consumir"
+  },
+  "welcome": {
+    "title": "Pon nombre a tu casa",
+    "body": "Aquí guardarás lo que hay en el frigo, el congelador y la despensa.",
+    "nameLabel": "Nombre de la casa",
+    "defaultName": "Casa",
+    "submit": "Empezar"
+  },
+  "inventory": {
+    "searchLabel": "Buscar en el inventario",
+    "searchPlaceholder": "Buscar…",
+    "zoneAll": "Todo",
+    "leftovers": "Restos",
+    "sortLabel": "Ordenar por",
+    "sort": {
+      "date": "Fecha más próxima",
+      "name": "Nombre",
+      "category": "Categoría"
+    },
+    "minusOne": "−1",
+    "consumeOne": "Restar uno de {{name}}",
+    "containerNumber": "#{{number}}",
+    "frozenSince": "Congelado desde {{date}}",
+    "emptyTitle": "Tu nevera está vacía",
+    "emptyBody": "Añade lo que tienes y sabrás siempre qué hay y cuándo caduca.",
+    "emptyAction": "Añadir algo",
+    "emptyFilter": "Aquí no hay nada ahora mismo.",
+    "noResults": "Nada coincide con «{{query}}».",
+    "summary": {
+      "openMasculine_one": "{{amount}} abierto",
+      "openMasculine_other": "{{amount}} abiertos",
+      "openFeminine_one": "{{amount}} abierta",
+      "openFeminine_other": "{{amount}} abiertas",
+      "bulkOpen": "{{amount}} (abierto)"
+    }
+  },
+  "add": {
+    "title": "Añadir",
+    "searchLabel": "Buscar un producto",
+    "searchPlaceholder": "¿Qué quieres añadir?",
+    "inHouse": "Ya en tu casa",
+    "create": "Crear «{{name}}»",
+    "leftover": "Añadir un táper o resto"
+  },
+  "form": {
+    "category": "Categoría",
+    "quantityKind": "Cómo se cuenta",
+    "unit": "Unidad",
+    "contentAmount": "Contenido de cada uno",
+    "contentUnit": "Medida",
+    "quantity": "Cantidad",
+    "zone": "Dónde está",
+    "printedDate": "Fecha impresa (opcional)",
+    "dateType": "¿Qué fecha es?",
+    "frozenHint": "Lo que está en el congelador cuenta como congelado: no tendrá fecha, salvo que pongas una de aviso.",
+    "frozenAt": "Congelado desde",
+    "reminder": "Fecha de aviso (opcional)",
+    "reminderHint": "Sirve para recordar cuándo consumirlo.",
+    "moreDetails": "Más detalles",
+    "countedAs": "Se cuenta por: {{what}}",
+    "containerOf": "{{unit}} de {{amount}} {{measure}}",
+    "brand": "Marca",
+    "purchasedAt": "Fecha de compra",
+    "submit": "Añadir",
+    "errors": {
+      "quantity": "Indica una cantidad mayor que cero.",
+      "content": "Indica cuánto contiene cada uno.",
+      "dateType": "Indica si es de caducidad o de consumo preferente."
+    }
+  },
+  "leftover": {
+    "title": "Añadir táper",
+    "name": "Qué es",
+    "servings": "Raciones",
+    "cookedAt": "Fecha de cocinado",
+    "containerNumber": "Número de recipiente",
+    "containerHint": "Escríbelo en la tapa. Si lo dejas vacío, se usa el número que ves.",
+    "invalidNumber": "El número de recipiente debe ser un entero mayor que cero.",
+    "submit": "Guardar táper"
+  },
+  "product": {
+    "notFound": "Este producto ya no existe.",
+    "rename": "Editar nombre y categoría",
+    "totalContent": "En total: {{amount}}",
+    "reminder": "Aviso:",
+    "remaining": "Queda {{percent}}",
+    "openedSince": "Abierto desde {{date}}",
+    "thawedOn": "Descongelado el {{date}}",
+    "cookedOn": "Cocinado el {{date}}",
+    "noDate": "Sin fecha impresa",
+    "expiresOn": "Caduca el {{date}}",
+    "bestBeforeOn": "Consumo preferente: {{date}}",
+    "addReminder": "Poner fecha de aviso",
+    "editReminder": "Cambiar fechas",
+    "fractions": {
+      "quarter": "¼",
+      "half": "½",
+      "threeQuarters": "¾",
+      "empty": "Vacío",
+      "exact": "Exacto"
+    },
+    "actions": {
+      "openOne": "Abrir uno",
+      "markOpen": "Marcar abierto",
+      "adjust": "Ajustar",
+      "move": "Mover",
+      "freeze": "Congelar",
+      "thaw": "Descongelar",
+      "discard": "Tirar",
+      "edit": "Editar"
+    },
+    "brandTitle": "Marca preferida",
+    "preferredBrand": "Marca preferida",
+    "brandNotes": "Notas de marca",
+    "brandNotesPlaceholder": "Por ejemplo: la de Auchan no me gustó",
+    "emptyTitle": "No queda nada de este producto.",
+    "addMore": "Añadir más",
+    "delete": "Eliminar producto"
+  },
+  "sheets": {
+    "openUnits": "Abiertos",
+    "openUnit": "Abierto, queda {{percent}}",
+    "consume": {
+      "title": "Consumir {{name}}",
+      "amount": "Cuánto (hay {{available}})",
+      "all": "Todo",
+      "submit": "Consumir"
+    },
+    "adjust": {
+      "title": "Ajustar cantidad",
+      "label": "Cantidad real"
+    },
+    "move": {
+      "title": "Mover",
+      "freezeTitle": "Congelar",
+      "thawTitle": "Descongelar",
+      "to": "A dónde",
+      "amount": "Cuánto",
+      "freezeHint": "Sin fecha de aviso, no tendrá fecha mientras esté congelado.",
+      "thawHint": "Sin fecha de aviso, se usa la fecha impresa.",
+      "submit": "Mover",
+      "freezeSubmit": "Congelar",
+      "thawSubmit": "Descongelar"
+    },
+    "discard": {
+      "title": "Tirar",
+      "amount": "Cuánto",
+      "submit": "Tirar"
+    },
+    "edit": {
+      "title": "Editar lote",
+      "thawedAt": "Descongelado el",
+      "openedAt": "Abierto el"
+    },
+    "exact": {
+      "title": "Cuánto queda",
+      "label": "Porcentaje que queda",
+      "equivalent": "Son {{amount}}.",
+      "invalid": "Escribe un número entre 0 y 100."
+    },
+    "unitDates": {
+      "title": "Fechas de la unidad abierta"
+    },
+    "rename": {
+      "title": "Editar producto",
+      "name": "Nombre"
+    },
+    "delete": {
+      "title": "¿Eliminar {{name}}?",
+      "body": "Dejará de aparecer al añadir productos, y se perderán su marca preferida y sus notas. El historial no cambia.",
+      "submit": "Eliminar"
+    }
+  },
+  "movements": {
+    "title": "Movimientos",
+    "empty": "Aún no hay movimientos.",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "loadMore": "Ver más",
+    "types": {
+      "added_one": "Se añadió {{qty}} de {{name}} ({{zone}})",
+      "added_other": "Se añadieron {{qty}} de {{name}} ({{zone}})",
+      "consumed_one": "Se consumió {{qty}} de {{name}}",
+      "consumed_other": "Se consumieron {{qty}} de {{name}}",
+      "opened": "Se abrió {{name}}",
+      "finished": "Se terminó {{qty}} de {{name}}",
+      "adjusted": "Se ajustó {{name}} a {{qty}}",
+      "adjustedFraction": "Se ajustó {{name}}: queda {{percent}}",
+      "edited": "Se editaron los datos de {{name}}",
+      "moved_one": "Se movió {{qty}} de {{name}} a {{zone}}",
+      "moved_other": "Se movieron {{qty}} de {{name}} a {{zone}}",
+      "frozen_one": "Se congeló {{qty}} de {{name}}",
+      "frozen_other": "Se congelaron {{qty}} de {{name}}",
+      "thawed_one": "Se descongeló {{qty}} de {{name}} ({{zone}})",
+      "thawed_other": "Se descongelaron {{qty}} de {{name}} ({{zone}})",
+      "discarded_one": "Se tiró {{qty}} de {{name}}",
+      "discarded_other": "Se tiraron {{qty}} de {{name}}",
+      "cooked": "Se guardó el táper #{{number}}: {{name}} ({{qty}})",
+      "other": "Cambio en {{name}}"
+    }
+  },
+  "toast": {
+    "undo": "Deshacer",
+    "undone": "Deshecho",
+    "added": "Añadido",
+    "cooked": "Táper guardado",
+    "consumed": "Restado",
+    "opened": "Abierto",
+    "adjusted": "Ajustado",
+    "finished": "Terminado",
+    "moved": "Movido",
+    "frozen": "Congelado",
+    "thawed": "Descongelado",
+    "discarded": "Tirado",
+    "edited": "Guardado"
+  },
+  "errors": {
+    "not_member": "No perteneces a esta casa.",
+    "not_found": "Esto ya no existe. Puede que otra persona lo haya cambiado.",
+    "invalid_amount": "Esa cantidad no es válida.",
+    "invalid_input": "Revisa los datos e inténtalo de nuevo.",
+    "nothing_to_consume": "Ya no queda nada que restar.",
+    "nothing_to_open": "No queda nada sin abrir.",
+    "same_zone": "Ya está en esa zona.",
+    "container_number_taken": "Ese número de recipiente ya está en uso.",
+    "undo_expired": "Ya no se puede deshacer: han pasado más de 2 minutos.",
+    "undo_conflict": "Ya no se puede deshacer: alguien lo ha cambiado después.",
+    "product_name_taken": "Ya hay otro producto con ese nombre.",
+    "product_has_stock": "Todavía quedan existencias de este producto.",
+    "network": "No hay conexión con el servidor. Comprueba tu internet y vuelve a probar.",
+    "unknown": "Algo ha fallado. Vuelve a probar en un momento."
   },
   "auth": {
     "fields": {
@@ -60,17 +380,10 @@
       "unknown": "Algo ha fallado. Vuelve a probar en un momento."
     }
   },
-  "home": {
-    "greeting": "Hola, {{name}}",
-    "greetingNoName": "Hola",
-    "placeholder": "Aquí verás tu inventario muy pronto."
-  },
   "settings": {
     "open": "Abrir ajustes",
-    "back": "Volver",
     "title": "Ajustes",
     "profile": "Perfil",
-    "save": "Guardar",
     "saved": "Guardado",
     "saveError": "No se ha podido guardar. Vuelve a probar.",
     "signedInAs": "Sesión iniciada como {{email}}",

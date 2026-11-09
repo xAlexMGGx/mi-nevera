@@ -37,5 +37,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+    // Arrancar Postgres en memoria tarda varios segundos con los tests en paralelo.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 })

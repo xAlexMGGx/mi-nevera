@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router'
 import { App } from './App'
 import { AuthProvider } from './auth/AuthProvider'
+import { ToastProvider } from './components/Toast'
 import './i18n'
 import './index.css'
 import { isSupabaseConfigured } from './lib/supabase'
@@ -16,9 +17,11 @@ createRoot(document.getElementById('root')!).render(
     {isSupabaseConfigured ? (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <HashRouter>
-            <App />
-          </HashRouter>
+          <ToastProvider>
+            <HashRouter>
+              <App />
+            </HashRouter>
+          </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>
     ) : (

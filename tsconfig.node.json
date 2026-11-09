@@ -15,5 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["vite.config.ts", "pwa-assets.config.ts", "tests"]
+  "include": ["vite.config.ts", "pwa-assets.config.ts", "tests", "scripts", "src/domain/types.ts"]
 }

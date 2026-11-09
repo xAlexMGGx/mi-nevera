@@ -4,10 +4,330 @@
     "tagline": "What food you have, how much, and when it expires.",
     "loading": "Loading…"
   },
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "save": "Save",
+    "change": "Change",
+    "retry": "Try again",
+    "increase": "Increase",
+    "decrease": "Decrease",
+    "loadError": "Couldn't load. Check your connection."
+  },
   "language": {
     "label": "Language",
     "es": "Español",
     "en": "English"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "inventory": "Inventory",
+    "add": "Add"
+  },
+  "zones": {
+    "fridge": "Fridge",
+    "freezer": "Freezer",
+    "pantry": "Pantry"
+  },
+  "categories": {
+    "dairy_eggs": "Dairy and eggs",
+    "meat": "Meat",
+    "fish": "Fish and seafood",
+    "fruit": "Fruit",
+    "vegetables": "Vegetables",
+    "bread": "Bread and pastries",
+    "pasta_rice_legumes": "Pasta, rice and legumes",
+    "canned": "Canned food",
+    "frozen": "Frozen food",
+    "drinks": "Drinks",
+    "sauces": "Sauces, oils and seasonings",
+    "snacks": "Snacks and sweets",
+    "breakfast": "Breakfast",
+    "cooked": "Cooked dishes",
+    "other": "Other"
+  },
+  "units": {
+    "unit_one": "unit",
+    "unit_other": "units",
+    "piece_one": "piece",
+    "piece_other": "pieces",
+    "egg_one": "egg",
+    "egg_other": "eggs",
+    "yogurt_one": "yogurt",
+    "yogurt_other": "yogurts",
+    "brick_one": "carton",
+    "brick_other": "cartons",
+    "bottle_one": "bottle",
+    "bottle_other": "bottles",
+    "can_one": "can",
+    "can_other": "cans",
+    "jar_one": "jar",
+    "jar_other": "jars",
+    "package_one": "pack",
+    "package_other": "packs",
+    "bag_one": "bag",
+    "bag_other": "bags",
+    "tray_one": "tray",
+    "tray_other": "trays",
+    "box_one": "box",
+    "box_other": "boxes",
+    "loaf_one": "loaf",
+    "loaf_other": "loaves",
+    "serving_one": "serving",
+    "serving_other": "servings"
+  },
+  "contentUnits": {
+    "g": "g",
+    "kg": "kg",
+    "ml": "ml",
+    "l": "l",
+    "ud": "pcs"
+  },
+  "quantityKinds": {
+    "count": "By the unit (eggs, cans…)",
+    "divisible": "Containers with contents (cartons, packs…)",
+    "bulk": "Loose or by weight (tomatoes, cheese…)"
+  },
+  "dateTypes": {
+    "expiry": "Use by",
+    "best_before": "Best before"
+  },
+  "status": {
+    "expired": "Expired",
+    "review": "Check",
+    "soon": "Soon",
+    "reviewNote": "Past its best-before date: check it before eating"
+  },
+  "welcome": {
+    "title": "Name your home",
+    "body": "This is where you'll keep track of your fridge, freezer and pantry.",
+    "nameLabel": "Home name",
+    "defaultName": "Home",
+    "submit": "Get started"
+  },
+  "inventory": {
+    "searchLabel": "Search the inventory",
+    "searchPlaceholder": "Search…",
+    "zoneAll": "All",
+    "leftovers": "Leftovers",
+    "sortLabel": "Sort by",
+    "sort": {
+      "date": "Nearest date",
+      "name": "Name",
+      "category": "Category"
+    },
+    "minusOne": "−1",
+    "consumeOne": "Take one from {{name}}",
+    "containerNumber": "#{{number}}",
+    "frozenSince": "Frozen since {{date}}",
+    "emptyTitle": "Your fridge is empty",
+    "emptyBody": "Add what you have and you'll always know what's there and when it expires.",
+    "emptyAction": "Add something",
+    "emptyFilter": "Nothing here right now.",
+    "noResults": "Nothing matches “{{query}}”.",
+    "summary": {
+      "openMasculine_one": "{{amount}} open",
+      "openMasculine_other": "{{amount}} open",
+      "openFeminine_one": "{{amount}} open",
+      "openFeminine_other": "{{amount}} open",
+      "bulkOpen": "{{amount}} (open)"
+    }
+  },
+  "add": {
+    "title": "Add",
+    "searchLabel": "Search for a product",
+    "searchPlaceholder": "What do you want to add?",
+    "inHouse": "Already in your home",
+    "create": "Create “{{name}}”",
+    "leftover": "Add a leftovers container"
+  },
+  "form": {
+    "category": "Category",
+    "quantityKind": "How it's counted",
+    "unit": "Unit",
+    "contentAmount": "Contents of each",
+    "contentUnit": "Measure",
+    "quantity": "Quantity",
+    "zone": "Where it is",
+    "printedDate": "Printed date (optional)",
+    "dateType": "What kind of date is it?",
+    "frozenHint": "Anything in the freezer counts as frozen: it won't have a date unless you set a reminder date.",
+    "frozenAt": "Frozen since",
+    "reminder": "Reminder date (optional)",
+    "reminderHint": "Helps you remember when to eat it.",
+    "moreDetails": "More details",
+    "countedAs": "Counted by: {{what}}",
+    "containerOf": "{{amount}} {{measure}} {{unit}}",
+    "brand": "Brand",
+    "purchasedAt": "Purchase date",
+    "submit": "Add",
+    "errors": {
+      "quantity": "Enter a quantity greater than zero.",
+      "content": "Enter how much each one contains.",
+      "dateType": "Say whether it's a use-by or a best-before date."
+    }
+  },
+  "leftover": {
+    "title": "Add leftovers",
+    "name": "What it is",
+    "servings": "Servings",
+    "cookedAt": "Date cooked",
+    "containerNumber": "Container number",
+    "containerHint": "Write it on the lid. If you leave it empty, the number shown is used.",
+    "invalidNumber": "The container number must be a whole number greater than zero.",
+    "submit": "Save leftovers"
+  },
+  "product": {
+    "notFound": "This product no longer exists.",
+    "rename": "Edit name and category",
+    "totalContent": "In total: {{amount}}",
+    "reminder": "Reminder:",
+    "remaining": "{{percent}} left",
+    "openedSince": "Open since {{date}}",
+    "thawedOn": "Thawed on {{date}}",
+    "cookedOn": "Cooked on {{date}}",
+    "noDate": "No printed date",
+    "expiresOn": "Use by {{date}}",
+    "bestBeforeOn": "Best before {{date}}",
+    "addReminder": "Set a reminder date",
+    "editReminder": "Change dates",
+    "fractions": {
+      "quarter": "¼",
+      "half": "½",
+      "threeQuarters": "¾",
+      "empty": "Empty",
+      "exact": "Exact"
+    },
+    "actions": {
+      "openOne": "Open one",
+      "markOpen": "Mark as open",
+      "adjust": "Adjust",
+      "move": "Move",
+      "freeze": "Freeze",
+      "thaw": "Thaw",
+      "discard": "Throw away",
+      "edit": "Edit"
+    },
+    "brandTitle": "Preferred brand",
+    "preferredBrand": "Preferred brand",
+    "brandNotes": "Brand notes",
+    "brandNotesPlaceholder": "For example: didn't like the Auchan one",
+    "emptyTitle": "There's none of this product left.",
+    "addMore": "Add more",
+    "delete": "Delete product"
+  },
+  "sheets": {
+    "openUnits": "Open",
+    "openUnit": "Open, {{percent}} left",
+    "consume": {
+      "title": "Use {{name}}",
+      "amount": "How much (there's {{available}})",
+      "all": "All of it",
+      "submit": "Use"
+    },
+    "adjust": {
+      "title": "Adjust quantity",
+      "label": "Actual quantity"
+    },
+    "move": {
+      "title": "Move",
+      "freezeTitle": "Freeze",
+      "thawTitle": "Thaw",
+      "to": "Where to",
+      "amount": "How much",
+      "freezeHint": "Without a reminder date, it won't have a date while it's frozen.",
+      "thawHint": "Without a reminder date, the printed date is used.",
+      "submit": "Move",
+      "freezeSubmit": "Freeze",
+      "thawSubmit": "Thaw"
+    },
+    "discard": {
+      "title": "Throw away",
+      "amount": "How much",
+      "submit": "Throw away"
+    },
+    "edit": {
+      "title": "Edit batch",
+      "thawedAt": "Thawed on",
+      "openedAt": "Opened on"
+    },
+    "exact": {
+      "title": "How much is left",
+      "label": "Percentage left",
+      "equivalent": "That's {{amount}}.",
+      "invalid": "Enter a number between 0 and 100."
+    },
+    "unitDates": {
+      "title": "Dates of the open unit"
+    },
+    "rename": {
+      "title": "Edit product",
+      "name": "Name"
+    },
+    "delete": {
+      "title": "Delete {{name}}?",
+      "body": "It will stop appearing when you add products, and its preferred brand and notes will be lost. The history doesn't change.",
+      "submit": "Delete"
+    }
+  },
+  "movements": {
+    "title": "Activity",
+    "empty": "No activity yet.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "loadMore": "See more",
+    "types": {
+      "added_one": "Added {{qty}} of {{name}} ({{zone}})",
+      "added_other": "Added {{qty}} of {{name}} ({{zone}})",
+      "consumed_one": "Used {{qty}} of {{name}}",
+      "consumed_other": "Used {{qty}} of {{name}}",
+      "opened": "Opened {{name}}",
+      "finished": "Finished {{qty}} of {{name}}",
+      "adjusted": "Adjusted {{name}} to {{qty}}",
+      "adjustedFraction": "Adjusted {{name}}: {{percent}} left",
+      "edited": "Edited the details of {{name}}",
+      "moved_one": "Moved {{qty}} of {{name}} to {{zone}}",
+      "moved_other": "Moved {{qty}} of {{name}} to {{zone}}",
+      "frozen_one": "Froze {{qty}} of {{name}}",
+      "frozen_other": "Froze {{qty}} of {{name}}",
+      "thawed_one": "Thawed {{qty}} of {{name}} ({{zone}})",
+      "thawed_other": "Thawed {{qty}} of {{name}} ({{zone}})",
+      "discarded_one": "Threw away {{qty}} of {{name}}",
+      "discarded_other": "Threw away {{qty}} of {{name}}",
+      "cooked": "Saved leftovers #{{number}}: {{name}} ({{qty}})",
+      "other": "Change to {{name}}"
+    }
+  },
+  "toast": {
+    "undo": "Undo",
+    "undone": "Undone",
+    "added": "Added",
+    "cooked": "Leftovers saved",
+    "consumed": "Taken off",
+    "opened": "Opened",
+    "adjusted": "Adjusted",
+    "finished": "Finished",
+    "moved": "Moved",
+    "frozen": "Frozen",
+    "thawed": "Thawed",
+    "discarded": "Thrown away",
+    "edited": "Saved"
+  },
+  "errors": {
+    "not_member": "You don't belong to this home.",
+    "not_found": "This no longer exists. Someone else may have changed it.",
+    "invalid_amount": "That quantity isn't valid.",
+    "invalid_input": "Check the details and try again.",
+    "nothing_to_consume": "There's nothing left to take off.",
+    "nothing_to_open": "There's nothing left unopened.",
+    "same_zone": "It's already there.",
+    "container_number_taken": "That container number is already in use.",
+    "undo_expired": "Can't undo: more than 2 minutes have passed.",
+    "undo_conflict": "Can't undo: someone has changed it since.",
+    "product_name_taken": "There's already another product with that name.",
+    "product_has_stock": "There's still some of this product left.",
+    "network": "Can't reach the server. Check your internet connection and try again.",
+    "unknown": "Something went wrong. Try again in a moment."
   },
   "auth": {
     "fields": {
@@ -60,17 +380,10 @@
       "unknown": "Something went wrong. Try again in a moment."
     }
   },
-  "home": {
-    "greeting": "Hi, {{name}}",
-    "greetingNoName": "Hi",
-    "placeholder": "Your inventory will show up here very soon."
-  },
   "settings": {
     "open": "Open settings",
-    "back": "Back",
     "title": "Settings",
     "profile": "Profile",
-    "save": "Save",
     "saved": "Saved",
     "saveError": "Couldn't save. Please try again.",
     "signedInAs": "Signed in as {{email}}",

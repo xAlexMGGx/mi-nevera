@@ -26,3 +26,61 @@ export function BackIcon() {
     </svg>
   )
 }
+
+export function PlusIcon() {
+  return (
+    <svg {...shared}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
+export function MinusIcon() {
+  return (
+    <svg {...shared}>
+      <path d="M5 12h14" />
+    </svg>
+  )
+}
+
+export function SearchIcon() {
+  return (
+    <svg {...shared} width={20} height={20}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  )
+}
+
+export function PencilIcon() {
+  return (
+    <svg {...shared} width={20} height={20}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  )
+}
+
+export function ListIcon() {
+  return (
+    <svg {...shared}>
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </svg>
+  )
+}
+
+export function ChevronIcon() {
+  return (
+    <svg {...shared} width={20} height={20}>
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  )
+}
+
+export function CloseIcon() {
+  return (
+    <svg {...shared}>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  )
+}

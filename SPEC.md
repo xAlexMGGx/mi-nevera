@@ -121,7 +121,7 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 
 ### 5.4 Historial
 
-- **`movements`**: `house_id`, `type`, `product_name` (copia, para que el historial no se rompa si se borra el producto), `quantity_text` (p. ej. "3 bricks"), `details jsonb` (zona, casa destino/origen, y **estado previo** para poder deshacer), `created_at`.
+- **`movements`**: `house_id`, `type`, `product_name` (copia, para que el historial no se rompa si se borra el producto), `details jsonb` (cantidad y unidad, para mostrarlas en el idioma de cada persona; zona, casa destino/origen), `undo_state jsonb` (**estado previo** para poder deshacer; no legible desde el cliente), `created_at`.
   - Tipos: `added`, `consumed`, `opened`, `adjusted`, `finished`, `moved_zone`, `moved_out`, `moved_in`, `frozen`, `thawed`, `discarded`, `cooked`, `ticket_applied`.
   - **Sin `user_id`** (principio 5).
   - Un movimiento entre casas genera `moved_out` en la origen y `moved_in` en la destino.
@@ -147,15 +147,18 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 
 | Función | Qué hace |
 |---|---|
+| `create_house(name)` | Crea la casa con sus 3 zonas, hace propietario a quien la crea y la deja activa. No registra movimiento |
 | `add_lot(...)` | Crea lote (y producto si no existe) + `date_samples` |
-| `consume(product_id \| lot_id, amount)` | Resta aplicando FEFO; para `divisible`, primero termina unidades abiertas, después abre/cuenta cerradas según la acción |
-| `open_unit(lot_id, reminder_date?)` | Pasa una unidad cerrada a abierta (100 %) |
+| `add_cooked_dish(...)` | Crea un táper: producto propio, lote y número de recipiente. Registra `cooked` |
+| `consume(product_id \| lot_id, amount, zone_id?, all?)` | Resta aplicando FEFO; para `divisible`, primero termina unidades abiertas, después abre/cuenta cerradas según la acción. Con `zone_id` se limita a esa zona. Si piden más de lo que queda, consume lo que hay |
+| `open_unit(lot_id \| product_id, reminder_date?)` | Pasa una unidad cerrada a abierta (100 %). En `count` separa la unidad en un lote propio; en `bulk` marca el lote entero |
 | `set_remaining(opened_unit_id, fraction)` | Ajusta lo que queda; si llega a 0, la elimina (`finished`) |
+| `update_opened_unit(opened_unit_id, ...)` | Edita las fechas de una unidad abierta. Registra `adjusted` |
 | `adjust_quantity(lot_id, new_quantity)` | Corrección manual (único caso en que se envía un valor final; registra `adjusted`) |
 | `update_lot(lot_id, ...)` | Edita los datos del lote: fechas (incluidas `frozen_at`, `thawed_at` y `reminder_date`), tipo de fecha, marca y número de recipiente. Registra `adjusted` |
-| `move_lot(lot_id, quantity, target_zone_id)` | Mueve entre zonas o casas. Si se mueve parte, divide el lote conservando fechas y marca. Entre casas, empareja el producto destino por `catalog_item_id` o nombre normalizado; si no existe, lo crea |
-| `freeze(lot_id, quantity, reminder_date?)` / `thaw(...)` | Mueve a/desde el congelador fijando `frozen_at`/`thawed_at`. Mover un lote al Congelador equivale siempre a congelarlo, y sacarlo a descongelarlo |
-| `discard(lot_id, quantity)` | Tirar (distinto de consumir) |
+| `move_lot(lot_id, quantity, target_zone_id, opened_unit_ids?, reminder_date?)` | Mueve entre zonas o casas (entre casas, en la fase 2). Si se mueve parte, divide el lote conservando fechas y marca. Mover al Congelador es congelar (`frozen`, fija `frozen_at`) y sacarlo es descongelar (`thawed`, fija `thawed_at`). Entre casas, empareja el producto destino por `catalog_item_id` o nombre normalizado; si no existe, lo crea |
+| `discard(lot_id, quantity, opened_unit_ids?)` | Tirar (distinto de consumir) |
+| `update_product(product_id, ...)` / `delete_product(product_id)` | Editan nombre, categoría, marca preferida y notas, o borran un producto sin existencias. No cambian el inventario, así que no registran movimiento |
 | `apply_ticket(payload)` | Aplica las líneas confirmadas de la preview y guarda alias |
 | `cook_recipe(payload)` | Aplica los descuentos confirmados y, opcionalmente, crea táper |
 | `undo_movement(movement_id)` | Restaura el estado previo guardado en `details`. Solo movimientos de los últimos 2 minutos. Se rechaza si un movimiento posterior tocó los mismos lotes, para no pisar el cambio de otra persona. Si se deshace, el movimiento desaparece del historial |
@@ -526,9 +529,22 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 0 · Base. Código terminado, pendiente de configurar, desplegar y confirmar en el iPhone.
+**Fase actual:** 1 · Inventario. Código terminado, pendiente de aplicar las migraciones, desplegar y confirmar en el iPhone.
 
 ### Hecho
+
+**Fase 1 · Inventario**
+
+- Casas, zonas y pantalla de bienvenida para crear la primera casa.
+- Catálogo de 197 alimentos en `supabase/seed/catalog.json`; `npm run catalog:migration` lo convierte en migración.
+- Productos, lotes, tipos de cantidad, fecha impresa y tipo, unidades abiertas y tápers con número de recipiente.
+- Consumir (FEFO), abrir, ajustar, terminar, tirar, mover entre zonas, congelar y descongelar, todo con funciones atómicas.
+- Vista lista, filtros por zona y Restos, orden, búsqueda difusa, estado y colores.
+- Detalle de producto, marca preferida y notas, renombrar y eliminar.
+- Movimientos agrupados por día y Deshacer.
+- Tests contra Postgres real: fecha efectiva, FEFO, división de lotes, números de táper, Deshacer y permisos.
+
+**Fase 0 · Base (confirmada)**
 
 - Proyecto Vite + React + TypeScript + Tailwind con modo oscuro y zonas seguras.
 - PWA instalable: manifest, service worker, iconos y pantallas de arranque de iPhone en claro y oscuro.
@@ -541,9 +557,10 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ### Pendiente
 
-- **Fase 0:** seguir `SETUP.md`, publicar y comprobar la aceptación en el iPhone. Es la primera prueba contra un Supabase real, ya que hasta ahora se ha simulado.
-- **`database.types.ts`:** escrito a mano mientras no hay proyecto enlazado. Lo sustituye `npm run db:types` en el paso 5 de `SETUP.md`.
-- **Fase 1:** sin empezar, a la espera de confirmación del propietario.
+- **Fase 1:** aplicar las migraciones, publicar y comprobar la aceptación en el iPhone. El recorrido se ha probado contra el SQL real, pero con la API de Supabase emulada y en Edge.
+- **Fase 2:** sin empezar, a la espera de confirmación del propietario.
+- **Para la fase 2:** con varias casas, el selector de la cabecera; moverse entre casas ya está previsto en `move_lot`.
+- **Para la fase 3:** el aviso real de `reminder_date`; hasta entonces solo afecta al color y al orden.
 
 ### Decisiones tomadas (2026-11-09)
 
@@ -561,3 +578,7 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **Enlaces de email:** flujo `implicit` de Supabase Auth, porque con PKCE la recuperación de contraseña fallaría al pedirla desde la app instalada y abrir el enlace en Safari.
 - **TypeScript 6:** el linter (`typescript-eslint`) todavía no soporta la versión 7.
 - **`npm audit`:** avisos moderados y bajos solo en herramientas de desarrollo (`eslint`, `workbox-build`). No llegan al móvil, y el arreglo automático bajaría versiones mayores, así que se dejan como están.
+- **Estado y fecha efectiva:** la fecha efectiva se calcula en SQL, porque FEFO la necesita en el servidor. El estado (colores) se calcula en `src/domain/status.ts`, porque depende del día de hoy y debe ser correcto sin conexión. Cada regla está implementada una sola vez.
+- **Escrituras:** el cliente solo lee las tablas. Todo cambio del inventario pasa por funciones, que bloquean la fila del producto para que dos personas no se pisen.
+- **Productos del catálogo:** al añadirlos, cómo se cuentan va plegado en "Más detalles", porque los valores por defecto suelen servir.
+- **Eliminar producto:** solo sin existencias, desde su detalle. No estaba en el SPEC, pero sin ello una errata al crear un producto se quedaría para siempre en el buscador de Añadir.
