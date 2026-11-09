@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
+import { HouseSwitcher } from '../components/HouseSwitcher'
 import { GearIcon, SearchIcon } from '../components/icons'
 import { Screen, topBarIcon } from '../components/Screen'
 import { StatusBadge } from '../components/StatusBadge'
-import { FullScreenLoader, LoadError, buttonClass, focusRing } from '../components/ui'
+import { Button, FullScreenLoader, LoadError, buttonClass, focusRing } from '../components/ui'
 import { useCatalog } from '../data/catalog'
 import { useDateContext } from '../data/context'
 import { useActiveHouse } from '../data/house'
@@ -14,6 +15,7 @@ import { buildProductViews, sortModes, sortViews, type ProductView, type Zone } 
 import { summarize } from '../domain/quantity'
 import { createSearch } from '../domain/search'
 import { zoneKinds, type Category, type ZoneKind } from '../domain/types'
+import { useOffline } from '../lib/connectivity'
 import { supabase } from '../lib/supabase'
 import { usePersistedState } from '../lib/persistedState'
 import { ConsumeAmountSheet } from './product/sheets'
@@ -125,6 +127,7 @@ export function InventoryPage() {
   const inventory = useInventory()
   const catalog = useCatalog()
   const { data: house } = useActiveHouse()
+  const offline = useOffline()
 
   // La búsqueda va en la URL para seguir ahí al volver del detalle de un producto.
   const [params, setParams] = useSearchParams()
@@ -151,7 +154,7 @@ export function InventoryPage() {
 
   function renderList() {
     if (inventory.isPending || catalog.isPending) return <FullScreenLoader />
-    if (inventory.isError) return <LoadError onRetry={() => void inventory.refetch()} />
+    if (inventory.isLoadingError) return <LoadError onRetry={() => void inventory.refetch()} />
 
     if (!hasStock) {
       return (
@@ -161,9 +164,15 @@ export function InventoryPage() {
           </span>
           <p className="text-lg font-semibold">{t('inventory.emptyTitle')}</p>
           <p className="text-ink-muted">{t('inventory.emptyBody')}</p>
-          <Link to="/add" className={`mt-2 max-w-60 ${buttonClass()}`}>
-            {t('inventory.emptyAction')}
-          </Link>
+          {offline ? (
+            <Button disabled className="mt-2 max-w-60">
+              {t('inventory.emptyAction')}
+            </Button>
+          ) : (
+            <Link to="/add" className={`mt-2 max-w-60 ${buttonClass()}`}>
+              {t('inventory.emptyAction')}
+            </Link>
+          )}
         </div>
       )
     }
@@ -188,6 +197,7 @@ export function InventoryPage() {
     <Screen
       withNav
       title={house?.name ?? t('app.name')}
+      heading={<HouseSwitcher />}
       action={
         <Link to="/settings" aria-label={t('settings.open')} className={topBarIcon}>
           <GearIcon />

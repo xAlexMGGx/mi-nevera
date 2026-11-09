@@ -388,8 +388,8 @@ export function AddPage() {
   const [selection, setSelection] = useState<Selection | null>(null)
 
   if (inventory.isPending || catalog.isPending) return <FullScreenLoader />
-  if (inventory.isError) return <LoadError onRetry={() => void inventory.refetch()} />
-  if (catalog.isError) return <LoadError onRetry={() => void catalog.refetch()} />
+  if (inventory.isLoadingError) return <LoadError onRetry={() => void inventory.refetch()} />
+  if (catalog.isLoadingError) return <LoadError onRetry={() => void catalog.refetch()} />
 
   // Desde el detalle de un producto agotado se llega con el producto ya elegido.
   const preselected = inventory.data.products.find((product) => product.id === params.get('product'))

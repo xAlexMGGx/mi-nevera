@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 
@@ -24,6 +25,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [toast, setToast] = useState<ToastState | null>(null)
   const [undoing, setUndoing] = useState(false)
+  const offline = useOffline()
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   // Cada aviso sustituye al anterior y reinicia su tiempo.
@@ -66,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             }`}
           >
             <p className="min-w-0 flex-1 py-1.5">{toast.text}</p>
-            {toast.movementId && (
+            {toast.movementId && !offline && (
               <button
                 type="button"
                 disabled={undoing}

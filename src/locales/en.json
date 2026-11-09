@@ -103,7 +103,85 @@
     "body": "This is where you'll keep track of your fridge, freezer and pantry.",
     "nameLabel": "Home name",
     "defaultName": "Home",
-    "submit": "Get started"
+    "submit": "Get started",
+    "join": "I've been invited: join with a code"
+  },
+  "offline": {
+    "banner": "Offline — read only",
+    "noData": "There's no saved data for this home. Connect to load it."
+  },
+  "houses": {
+    "title": "Homes",
+    "open": "Switch home. Now: {{name}}",
+    "choose": "Choose a home",
+    "current": "Active",
+    "manage": "Manage homes",
+    "create": "Create a home",
+    "createSubmit": "Create home",
+    "name": "Home name",
+    "join": "Join with a code",
+    "notFound": "You no longer belong to this home.",
+    "use": "Use this home",
+    "rename": "Rename",
+    "renameTitle": "Rename home",
+    "roles": {
+      "owner": "Owner",
+      "editor": "Editor"
+    },
+    "members": "Members",
+    "you": "you",
+    "noName": "No name",
+    "thisPerson": "this person",
+    "expel": "Remove",
+    "expelTitle": "Remove {{name}}?",
+    "expelBody": "They will no longer see this home. The inventory stays as it is.",
+    "invite": {
+      "title": "Invitations",
+      "body": "Each code works for one person and expires after 7 days. Whoever receives it needs their own account.",
+      "create": "Invite someone",
+      "expires": "Expires on {{date}}",
+      "share": "Share",
+      "revoke": "Cancel invitation",
+      "copied": "Copied. Paste it wherever you want to send it.",
+      "shareText": "I'm inviting you to “{{house}}” on Digital Fridge. In the app, go to Settings → Homes → Join with a code and enter {{code}}. Or open this link:"
+    },
+    "leave": "Leave this home",
+    "leaveTitle": "Leave {{name}}?",
+    "leaveBody": "You will no longer see it. The inventory stays for everyone else.",
+    "leaveBodyOwner": "You will no longer see it, and ownership will pass to whoever has been there longest. The inventory stays for everyone else.",
+    "leaveSubmit": "Leave",
+    "delete": "Delete this home",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteBody": "It will be deleted for all its members, along with its inventory and history. This can't be undone.",
+    "deleteType": "Type “{{name}}” to confirm",
+    "deleteSubmit": "Delete forever"
+  },
+  "join": {
+    "title": "Join a home",
+    "body": "Enter the code you were given. Each code works only once.",
+    "code": "Code",
+    "placeholder": "ABCD-EFGH",
+    "submit": "Join"
+  },
+  "myData": {
+    "title": "My data",
+    "export": {
+      "title": "Export",
+      "body": "Save your profile and everything in your homes to a JSON file.",
+      "prepare": "Prepare the file",
+      "ready": "The file is ready.",
+      "save": "Save the file"
+    },
+    "delete": {
+      "title": "Delete account",
+      "body": "This deletes your account, your profile and any home with nobody else in it. In shared homes, the inventory stays for everyone else and, if you were the owner, ownership passes to whoever has been there longest.",
+      "open": "Delete my account",
+      "sheetTitle": "Delete your account?",
+      "sheetBody": "This can't be undone. If you want to keep your data, export it first.",
+      "word": "DELETE",
+      "type": "Type {{word}} to confirm",
+      "submit": "Delete forever"
+    }
   },
   "inventory": {
     "searchLabel": "Search the inventory",
@@ -233,6 +311,8 @@
       "title": "Move",
       "freezeTitle": "Freeze",
       "thawTitle": "Thaw",
+      "house": "Which home",
+      "thisHouse": "{{name}} (this home)",
       "to": "Where to",
       "amount": "How much",
       "freezeHint": "Without a reminder date, it won't have a date while it's frozen.",
@@ -288,6 +368,10 @@
       "edited": "Edited the details of {{name}}",
       "moved_one": "Moved {{qty}} of {{name}} to {{zone}}",
       "moved_other": "Moved {{qty}} of {{name}} to {{zone}}",
+      "movedOut_one": "Moved {{qty}} of {{name}} to {{house}} ({{zone}})",
+      "movedOut_other": "Moved {{qty}} of {{name}} to {{house}} ({{zone}})",
+      "movedIn_one": "{{qty}} of {{name}} arrived from {{house}} ({{zone}})",
+      "movedIn_other": "{{qty}} of {{name}} arrived from {{house}} ({{zone}})",
       "frozen_one": "Froze {{qty}} of {{name}}",
       "frozen_other": "Froze {{qty}} of {{name}}",
       "thawed_one": "Thawed {{qty}} of {{name}} ({{zone}})",
@@ -315,6 +399,10 @@
   },
   "errors": {
     "not_member": "You don't belong to this home.",
+    "not_owner": "Only the owner of this home can do that.",
+    "incompatible_product": "That home already has a product with this name that's counted differently. Rename one of them and try again.",
+    "invalid_invite": "That code isn't valid, has already been used or has expired. Ask for another one.",
+    "already_member": "You already belong to that home.",
     "not_found": "This no longer exists. Someone else may have changed it.",
     "invalid_amount": "That quantity isn't valid.",
     "invalid_input": "Check the details and try again.",

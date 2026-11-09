@@ -23,6 +23,8 @@ const supabaseStub = `
 
   grant usage on schema public to anon, authenticated, service_role;
   grant usage on schema auth to anon, authenticated, service_role;
+
+  create publication supabase_realtime;
 `
 
 /** Postgres real en memoria con todas las migraciones del repo aplicadas. */

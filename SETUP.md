@@ -16,6 +16,7 @@ Calcula unos 30 minutos. Ya tienes instalados Node y Git, así que no necesitas 
 8. Publicar la app
 9. Instalar la app en el móvil
 10. Cerrar el registro (más adelante)
+11. Enviar los correos con tu Gmail
 
 Tu app quedará publicada en **https://xalexmggx.github.io/mi-nevera/**.
 
@@ -212,6 +213,57 @@ Si alguien más quiere entrar después, actívalo un momento. Hazlo como muy tar
 
 ---
 
+## 11. Enviar los correos con tu Gmail
+
+El correo integrado de Supabase solo llega a los miembros de tu equipo de Supabase. Para que cualquiera de la familia pueda recuperar su contraseña, Supabase enviará los correos desde tu cuenta de Gmail. Es gratis y no necesitas un dominio propio. Calcula unos 10 minutos.
+
+**Crear una contraseña de aplicación en Google**
+
+Es una contraseña aparte que solo sirve para enviar correo. Tu contraseña de Google no sale de tu cuenta y puedes revocarla cuando quieras.
+
+1. Necesitas tener activada la **verificación en dos pasos**. Si no la tienes, actívala en <https://myaccount.google.com/signinoptions/twosv>.
+2. Abre <https://myaccount.google.com/apppasswords>.
+3. En el nombre de la aplicación escribe `Nevera digital` y pulsa **Crear**.
+4. Copia la contraseña de 16 letras que aparece. Solo se muestra una vez. Si la pierdes, borra esa y crea otra.
+
+> Si no aparece la opción, puede ser porque tu verificación en dos pasos solo usa llaves de seguridad, porque la cuenta es de una empresa o un centro educativo, o porque tiene activada la Protección Avanzada. En ese caso, usa otra cuenta de Gmail personal.
+
+**Configurar Supabase**
+
+1. Abre <https://supabase.com/dashboard/project/_/auth/smtp> y elige tu proyecto. Es **Authentication → Emails → SMTP Settings**.
+2. Activa **Enable custom SMTP** y rellena:
+
+   | Campo | Valor |
+   |---|---|
+   | Sender email | Tu dirección de Gmail |
+   | Sender name | `Nevera digital` |
+   | Host | `smtp.gmail.com` |
+   | Port number | `587` |
+   | Username | Tu dirección de Gmail completa |
+   | Password | La contraseña de aplicación de 16 letras, sin espacios |
+   | Minimum interval between emails | Déjalo como venga |
+
+3. Pulsa **Save changes**.
+
+**Poner el correo en español (opcional)**
+
+1. En **Authentication → Emails**, abre la pestaña **Templates** y elige **Reset Password**.
+2. En **Subject** escribe `Recupera tu contraseña de Nevera digital`.
+3. En el cuerpo, sustituye lo que haya por esto y guarda:
+
+   ```html
+   <h2>Recupera tu contraseña</h2>
+   <p>Pulsa el enlace para elegir una contraseña nueva:</p>
+   <p><a href="{{ .ConfirmationURL }}">Elegir contraseña nueva</a></p>
+   <p>Si no lo has pedido tú, ignora este correo.</p>
+   ```
+
+**Compruébalo:** en la app, cierra sesión, pulsa **He olvidado mi contraseña** y escribe el correo de alguien de la familia que no esté en tu equipo de Supabase. Le debe llegar en un par de minutos. Mira también en spam.
+
+Con el correo propio, Supabase permite unos 30 correos por hora, de sobra para una familia.
+
+---
+
 ## Trabajo habitual
 
 **Cuando una fase incluye migraciones nuevas**, aplícalas antes de publicar el código:
@@ -230,6 +282,7 @@ npm run db:types
 | URL de Supabase | No | `.env.local` y Variables de GitHub |
 | Clave `sb_publishable_` | No | `.env.local` y Variables de GitHub |
 | Contraseña de la base de datos | **Sí** | Solo en tu gestor de contraseñas |
+| Contraseña de aplicación de Gmail | **Sí** | Solo en Supabase, en SMTP Settings (paso 11) |
 | Clave `sb_secret_` | **Sí** | Solo en los secretos de Supabase, cuando una fase lo pida |
 
 ## Si algo falla
@@ -241,5 +294,7 @@ npm run db:types
 | La dirección de la app da error 404 | Comprueba que Pages usa **GitHub Actions** (paso 7) y que el proceso terminó en verde. |
 | Te registras, pero no te saluda por tu nombre | Faltan las tablas: repite `npm run db:push` (paso 5). |
 | `npm run db:types` falla y `src/lib/database.types.ts` queda vacío | Ejecuta `git checkout src/lib/database.types.ts` y vuelve a probar. |
-| No llega el correo de recuperación | Hasta la Fase 2 solo llega a los miembros de tu equipo de Supabase, con 2 correos por hora como máximo. Revisa también el spam. |
+| No llega el correo de recuperación | Revisa el spam. Si nunca llega, comprueba el paso 11: sin él, solo llega a los miembros de tu equipo de Supabase, con 2 correos por hora como máximo. |
+| Supabase da error al guardar SMTP Settings o al enviar | Revisa que Username y Sender email sean tu Gmail completo, y que la contraseña sea la de aplicación, sin espacios. Si sigue fallando, crea otra contraseña de aplicación. |
+| Un cambio en un móvil no aparece en el otro | Cierra la app del todo en los dos y vuelve a abrirla. Si sigue igual, comprueba que `npm run db:push` aplicó la migración de la Fase 2. |
 | La app deja de responder tras días sin usarla | El plan gratuito pausa el proyecto tras una semana con poca actividad. Entra en Supabase y restáuralo: no se pierde ningún dato. |

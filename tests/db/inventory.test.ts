@@ -505,12 +505,12 @@ describe('mover entre zonas', () => {
     await expect(rpc(household, 'move_lot', { p_lot_id: lot!.id, p_quantity: 0, p_target_zone_id: household.zones.pantry })).rejects.toThrow('invalid_amount')
   })
 
-  it('rechaza mover a una zona de otra casa (llega en la fase 2)', async () => {
+  it('rechaza mover a una zona de una casa de la que no se es miembro', async () => {
     const other = await createHousehold(household.db)
     await addMilk(household, 1, '2026-12-01')
     const [lot] = await lotsOf(household)
 
-    await expect(rpc(household, 'move_lot', { p_lot_id: lot!.id, p_quantity: 1, p_target_zone_id: other.zones.fridge })).rejects.toThrow('invalid_input')
+    await expect(rpc(household, 'move_lot', { p_lot_id: lot!.id, p_quantity: 1, p_target_zone_id: other.zones.fridge })).rejects.toThrow('not_member')
   })
 })
 
@@ -770,6 +770,33 @@ describe('deshacer', () => {
     const lots = await lotsOf(household)
     expect(Number(lots.find((row) => row.zone_id === household.zones.fridge)!.quantity)).toBe(4)
     expect(Number(lots.find((row) => row.zone_id === household.zones.pantry)!.quantity)).toBe(1)
+  })
+
+  // El orden de los identificadores es aleatorio y antes solo fallaba con algunos, de ahí la repetición.
+  it('deshacer un movimiento con unidades abiertas que se fusionó las devuelve a su lote', async () => {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const home = await createHousehold(db)
+      await addMilk(home, 3, '2026-12-01')
+      await addMilk(home, 1, '2026-12-01', { p_zone_id: home.zones.pantry })
+      await rpc(home, 'open_unit', { p_lot_id: (await lotsOf(home)).find((row) => row.zone_id === home.zones.fridge)!.id })
+      const fridgeLot = (await lotsOf(home)).find((row) => row.zone_id === home.zones.fridge)!
+      const [unit] = await unitsOf(home)
+      await rpc(home, 'move_lot', {
+        p_lot_id: fridgeLot.id,
+        p_quantity: 2,
+        p_target_zone_id: home.zones.pantry,
+        p_opened_unit_ids: [unit!.id],
+      })
+      expect(await lotsOf(home)).toHaveLength(1)
+
+      await rpc(home, 'undo_movement', { p_movement_id: (await movementsOf(home)).at(-1)!.id })
+
+      const lots = await lotsOf(home)
+      expect(lots).toHaveLength(2)
+      expect(Number(lots.find((row) => row.zone_id === home.zones.fridge)!.quantity)).toBe(2)
+      expect(Number(lots.find((row) => row.zone_id === home.zones.pantry)!.quantity)).toBe(1)
+      expect((await unitsOf(home))[0]).toMatchObject({ id: unit!.id, lot_id: fridgeLot.id })
+    }
   })
 
   it('deshacer congelar devuelve el lote a su zona y sus fechas', async () => {

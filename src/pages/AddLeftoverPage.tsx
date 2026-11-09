@@ -38,7 +38,7 @@ export function AddLeftoverPage() {
   const [reminderDate, setReminderDate] = useState('')
 
   if (inventory.isPending) return <FullScreenLoader />
-  if (inventory.isError) return <LoadError onRetry={() => void inventory.refetch()} />
+  if (inventory.isLoadingError) return <LoadError onRetry={() => void inventory.refetch()} />
 
   const zones = inventory.data.zones
   const typedNumber = parseAmount(number)

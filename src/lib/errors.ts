@@ -1,5 +1,6 @@
 const codes = [
   'not_member',
+  'not_owner',
   'not_found',
   'invalid_amount',
   'invalid_input',
@@ -11,6 +12,9 @@ const codes = [
   'undo_conflict',
   'product_name_taken',
   'product_has_stock',
+  'incompatible_product',
+  'invalid_invite',
+  'already_member',
 ] as const
 
 type Code = (typeof codes)[number]

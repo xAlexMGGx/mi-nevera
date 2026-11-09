@@ -78,8 +78,9 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 - **`profiles`**: `id` (= `auth.users.id`), `display_name`, `locale` (`es`|`en`), `timezone` (por defecto `Europe/Madrid`), `notify_enabled` (bool, def. true), `notify_hour` (def. 9), `notify_days_ahead` (def. 2), `recipe_preferences` (texto libre), `active_house_id`.
 - **`houses`**: `name`, `created_by`.
 - **`house_members`**: `house_id`, `user_id`, `role` (`owner`|`editor`), `joined_at`. PK compuesta.
-- **`house_invites`**: `house_id`, `code` (corto, legible), `created_by`, `expires_at` (def. 7 días), `used_at`.
+- **`house_invites`**: `house_id`, `code` (corto, legible: 8 caracteres sin los que se confunden, como `ABCD-EFGH`), `created_by`, `expires_at` (def. 7 días), `used_at`. Cada código sirve una vez. También se comparte como enlace (`#/join/CÓDIGO`).
 - **`zones`**: `house_id`, `kind` (`fridge`|`freezer`|`pantry`), `sort_order`. Se crean las tres al crear la casa (trigger).
+- **`house_changes`**: `house_id`, `version`. Señal de tiempo real: sube con cada cambio de la casa y, al recibirla, cada móvil vuelve a leer sus datos (fase 2).
 
 ### 5.2 Catálogo base (global, solo lectura)
 
@@ -156,12 +157,18 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | `update_opened_unit(opened_unit_id, ...)` | Edita las fechas de una unidad abierta. Registra `adjusted` |
 | `adjust_quantity(lot_id, new_quantity)` | Corrección manual (único caso en que se envía un valor final; registra `adjusted`) |
 | `update_lot(lot_id, ...)` | Edita los datos del lote: fechas (incluidas `frozen_at`, `thawed_at` y `reminder_date`), tipo de fecha, marca y número de recipiente. Registra `adjusted` |
-| `move_lot(lot_id, quantity, target_zone_id, opened_unit_ids?, reminder_date?)` | Mueve entre zonas o casas (entre casas, en la fase 2). Si se mueve parte, divide el lote conservando fechas y marca. Mover al Congelador es congelar (`frozen`, fija `frozen_at`) y sacarlo es descongelar (`thawed`, fija `thawed_at`). Entre casas, empareja el producto destino por `catalog_item_id` o nombre normalizado; si no existe, lo crea |
+| `move_lot(lot_id, quantity, target_zone_id, opened_unit_ids?, reminder_date?)` | Mueve entre zonas o casas. Si se mueve parte, divide el lote conservando fechas y marca. Mover al Congelador es congelar (`frozen`, fija `frozen_at`) y sacarlo es descongelar (`thawed`, fija `thawed_at`). Entre casas, empareja el producto destino por `catalog_item_id` o nombre normalizado; si no existe, lo crea (ver §7.5) |
 | `discard(lot_id, quantity, opened_unit_ids?)` | Tirar (distinto de consumir) |
 | `update_product(product_id, ...)` / `delete_product(product_id)` | Editan nombre, categoría, marca preferida y notas, o borran un producto sin existencias. No cambian el inventario, así que no registran movimiento |
 | `apply_ticket(payload)` | Aplica las líneas confirmadas de la preview y guarda alias |
 | `cook_recipe(payload)` | Aplica los descuentos confirmados y, opcionalmente, crea táper |
-| `undo_movement(movement_id)` | Restaura el estado previo guardado en `details`. Solo movimientos de los últimos 2 minutos. Se rechaza si un movimiento posterior tocó los mismos lotes, para no pisar el cambio de otra persona. Si se deshace, el movimiento desaparece del historial |
+| `undo_movement(movement_id)` | Restaura el estado previo guardado en `undo_state`. Solo movimientos de los últimos 2 minutos. Se rechaza si un movimiento posterior tocó los mismos lotes, para no pisar el cambio de otra persona. Si se deshace, el movimiento desaparece del historial. Un movimiento entre casas se deshace desde su salida (`moved_out`), que deshace también la entrada |
+| `create_invite(house_id)` / `revoke_invite(invite_id)` | Crean o anulan una invitación. Solo el propietario. No registran movimiento |
+| `join_house(code)` | Entra como editor con un código válido, lo gasta y deja la casa activa. Quien ya es miembro no lo gasta |
+| `rename_house(house_id, name)` / `delete_house(house_id)` | Solo el propietario. Borrar se lleva el inventario y el historial de la casa |
+| `list_house_members(house_id)` | Nombre, rol y fecha de entrada de cada miembro. No da acceso al resto del perfil |
+| `leave_house(house_id)` / `remove_member(house_id, user_id)` | Salir o expulsar (solo el propietario). Si se va el propietario, la propiedad pasa al miembro más antiguo; si no queda nadie, la casa se borra. Quien se queda sin su casa activa pasa a otra de las suyas o a la bienvenida |
+| `export_my_data()` / `delete_account()` | Exportan el perfil y las casas a JSON, o eliminan la cuenta con las reglas de §6 |
 
 ---
 
@@ -272,6 +279,11 @@ Al abrir, congelar, descongelar o crear un táper, se muestra un chip según `sh
 - Se elige casa destino, zona y cantidad.
 - Se conserva la fecha, el tipo de fecha, la marca y el estado (congelado, abierto).
 - Requiere ser miembro de ambas casas.
+- Como entre zonas, entrar en un congelador es congelar y salir de él, descongelar.
+- Si el producto no existe en la casa destino, se crea con su forma de contar, su marca preferida y sus notas.
+- Si en la casa destino hay un producto con el mismo nombre pero se cuenta de otra forma (por ejemplo, bricks de 500 ml frente a bricks de 1 l), no se mezclan: se pide renombrar uno de los dos.
+- Un táper es siempre un producto propio y recibe el número de recipiente libre más bajo de la casa destino.
+- Queda en el historial de las dos casas: "Se movió… a Casa de la playa" y "Llegó… desde Casa".
 
 ---
 
@@ -529,11 +541,24 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 1 · Inventario. Código terminado, pendiente de aplicar las migraciones, desplegar y confirmar en el iPhone.
+**Fase actual:** 2 · Casas compartidas. Código terminado, pendiente de aplicar la migración, configurar el correo, desplegar y confirmar con dos móviles.
 
 ### Hecho
 
-**Fase 1 · Inventario**
+**Fase 2 · Casas compartidas**
+
+- Varias casas: crear, cambiar desde el selector de la cabecera, renombrar y borrar (propietario).
+- Invitaciones con código o enlace, de un solo uso y válidas 7 días. Unirse desde la bienvenida o desde Ajustes → Casas.
+- Miembros con su rol, salir y expulsar. La propiedad pasa al miembro más antiguo.
+- Tiempo real en inventario, historial, casas y miembros. A quien expulsan, la app lo saca de la casa al momento.
+- Mover entre casas, con división de lotes, emparejamiento de productos y Deshacer de las dos partes.
+- Consulta sin conexión, con el aviso "Sin conexión — solo lectura" y las acciones de edición desactivadas.
+- Mis datos: exportar a JSON y eliminar la cuenta.
+- Guía para enviar los correos de Supabase con Gmail (paso 11 de `SETUP.md`).
+- Tests contra Postgres real: invitaciones, roles, salidas, señal de tiempo real, mover entre casas, Mis datos y concurrencia con varias conexiones.
+- Corregido un fallo de la fase 1: deshacer un movimiento con unidades abiertas que se había fusionado con otro lote podía fallar.
+
+**Fase 1 · Inventario (confirmada)**
 
 - Casas, zonas y pantalla de bienvenida para crear la primera casa.
 - Catálogo de 197 alimentos en `supabase/seed/catalog.json`; `npm run catalog:migration` lo convierte en migración.
@@ -557,14 +582,15 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ### Pendiente
 
-- **Fase 1:** aplicar las migraciones, publicar y comprobar la aceptación en el iPhone. El recorrido se ha probado contra el SQL real, pero con la API de Supabase emulada y en Edge.
-- **Fase 2:** sin empezar, a la espera de confirmación del propietario.
-- **Para la fase 2:** con varias casas, el selector de la cabecera; moverse entre casas ya está previsto en `move_lot`.
+- **Fase 2:** aplicar la migración, configurar el correo, publicar y comprobar la aceptación con dos móviles. El recorrido se ha probado contra el SQL real, pero con la API y el tiempo real de Supabase emulados y en Edge.
+- **Fase 3:** sin empezar, a la espera de confirmación del propietario.
 - **Para la fase 3:** el aviso real de `reminder_date`; hasta entonces solo afecta al color y al orden.
 
 ### Decisiones tomadas (2026-11-09)
 
 Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo aparecen aquí:
+
+**Fases 0 y 1**
 
 - **Registro:** confirmación por email desactivada. El registro se abre solo mientras se da de alta la familia y luego se cierra desde Supabase. El email integrado de Supabase solo llega a miembros del equipo (2 por hora), así que el SMTP propio llega en la fase 2.
 - **Hosting:** repo público, porque GitHub Pages gratis lo exige. No contiene secretos.
@@ -582,3 +608,14 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **Escrituras:** el cliente solo lee las tablas. Todo cambio del inventario pasa por funciones, que bloquean la fila del producto para que dos personas no se pisen.
 - **Productos del catálogo:** al añadirlos, cómo se cuentan va plegado en "Más detalles", porque los valores por defecto suelen servir.
 - **Eliminar producto:** solo sin existencias, desde su detalle. No estaba en el SPEC, pero sin ello una errata al crear un producto se quedaría para siempre en el buscador de Añadir.
+
+**Fase 2**
+
+- **Tiempo real:** la base de datos solo avisa de que algo ha cambiado (`house_changes`), y cada móvil vuelve a leer sus datos con sus permisos de siempre. Así el canal nunca lleva datos (tampoco `undo_state`), y se evita que Realtime no aplique las reglas de acceso ni los filtros a los borrados. El perfil también se escucha, para que a quien expulsan la app lo saque al momento.
+- **Sin conexión:** lo último que se vio se guarda en el móvil (IndexedDB), por separado para cada cuenta, durante 20 días. Se borra al cerrar sesión. Si el token ha caducado y no hay red, se usa la sesión guardada para consultar. Sin conexión no se puede editar nada, ni Deshacer.
+- **Invitaciones:** solo las ve y gestiona el propietario. Unirse lleva directamente a la casa. Quien abre un enlace sin haber entrado puede iniciar sesión o registrarse, y después se le propone el código.
+- **Miembros:** los demás solo se ven por su nombre, mediante una función. El resto del perfil sigue siendo privado.
+- **Acciones sin vuelta atrás:** borrar una casa pide escribir su nombre, y eliminar la cuenta, la palabra ELIMINAR. A quien está solo en una casa no se le ofrece "Salir", porque sería borrarla: se le ofrece "Borrar la casa".
+- **Eliminar la cuenta:** es una función de la base de datos, no una Edge Function. Todo ocurre en una sola transacción y sin claves secretas.
+- **Correo:** Gmail con contraseña de aplicación, que no necesita dominio propio y basta para una familia. Si algún día hay dominio, se puede cambiar a un servicio de envío como Brevo o Resend sin tocar el código.
+- **Exportar:** en el móvil, el archivo se guarda con Compartir → Guardar en Archivos; en el ordenador, se descarga.

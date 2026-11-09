@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
-function profileKey(userId: string) {
+export function profileKey(userId: string) {
   return ['profile', userId] as const
 }
 

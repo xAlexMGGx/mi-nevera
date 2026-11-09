@@ -22,6 +22,8 @@ interface MovementDetails {
   edited?: boolean
   zone?: ZoneKind
   to_zone?: ZoneKind
+  to_house?: string
+  from_house?: string
   container_number?: number
   quantity_kind: QuantityKind
   unit_label: string
@@ -64,6 +66,10 @@ function movementText(movement: Movement, catalog: CatalogById, t: TFunction, ta
       return t('movements.types.adjusted', { name, qty })
     case 'moved_zone':
       return t('movements.types.moved', { count: amount, qty, name, zone: toZone })
+    case 'moved_out':
+      return t('movements.types.movedOut', { count: amount, qty, name, house: details.to_house ?? '', zone: toZone })
+    case 'moved_in':
+      return t('movements.types.movedIn', { count: amount, qty, name, house: details.from_house ?? '', zone: toZone })
     case 'frozen':
       return t('movements.types.frozen', { count: amount, qty, name })
     case 'thawed':
@@ -101,7 +107,7 @@ export function MovementsPage() {
 
   function renderList() {
     if (query.isPending || catalog.isPending) return <FullScreenLoader />
-    if (query.isError) return <LoadError onRetry={() => void query.refetch()} />
+    if (query.isLoadingError) return <LoadError onRetry={() => void query.refetch()} />
 
     const movements = query.data.pages.flat()
     if (movements.length === 0) return <p className="py-12 text-center text-ink-muted">{t('movements.empty')}</p>

@@ -1,24 +1,17 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { AuthLayout } from '../components/AuthLayout'
-import { Button, Message, TextField } from '../components/ui'
+import { Button, Message, TextField, buttonClass } from '../components/ui'
+import { useHouseMutation } from '../data/house'
 import { errorKey } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 
-/** Primera vez: crea la casa. En la fase 2 ofrecerá también unirse a una con un código. */
+/** Primera vez: crea tu casa o únete a la de otra persona con un código. */
 export function WelcomePage() {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const [name, setName] = useState(() => t('welcome.defaultName'))
-
-  const createHouse = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc('create_house', { p_name: name })
-      if (error) throw error
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile'] }),
-  })
+  const createHouse = useHouseMutation(() => supabase.rpc('create_house', { p_name: name }))
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -42,6 +35,9 @@ export function WelcomePage() {
           {t('welcome.submit')}
         </Button>
       </form>
+      <Link to="/join" className={buttonClass('secondary')}>
+        {t('welcome.join')}
+      </Link>
     </AuthLayout>
   )
 }

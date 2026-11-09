@@ -77,6 +77,22 @@ export function ChevronIcon() {
   )
 }
 
+export function ChevronDownIcon() {
+  return (
+    <svg {...shared} width={20} height={20} className="shrink-0">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
+export function CheckIcon() {
+  return (
+    <svg {...shared} width={20} height={20} className="shrink-0">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
+}
+
 export function CloseIcon() {
   return (
     <svg {...shared}>

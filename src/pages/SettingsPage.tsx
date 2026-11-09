@@ -1,18 +1,20 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
+import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useUser } from '../auth/AuthProvider'
 import { ChevronIcon } from '../components/icons'
 import { Screen } from '../components/Screen'
 import { Button, Card, LanguageSwitcher, Message, TextField, focusRing } from '../components/ui'
+import { useOffline } from '../lib/connectivity'
+import { useFollowingState } from '../lib/followingState'
 import { supabase } from '../lib/supabase'
 import { useProfile, useUpdateProfile } from '../profile/useProfile'
 
 function ProfileForm({ initialName }: { initialName: string }) {
   const { t } = useTranslation()
   const updateProfile = useUpdateProfile()
-  const [name, setName] = useState(initialName)
+  const offline = useOffline()
+  const [name, setName] = useFollowingState(initialName)
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -34,24 +36,30 @@ function ProfileForm({ initialName }: { initialName: string }) {
       />
       {updateProfile.isSuccess && <Message tone="success">{t('settings.saved')}</Message>}
       {updateProfile.isError && <Message tone="error">{t('settings.saveError')}</Message>}
-      <Button type="submit" variant="secondary" disabled={updateProfile.isPending}>
+      <Button type="submit" variant="secondary" disabled={updateProfile.isPending || offline}>
         {t('common.save')}
       </Button>
     </form>
   )
 }
 
+function SettingsLink({ to, label }: { to: string; label: string }) {
+  return (
+    <Link to={to} className={`flex min-h-14 items-center justify-between rounded-2xl border border-line bg-surface px-4 font-semibold ${focusRing}`}>
+      {label}
+      <span className="text-ink-muted">
+        <ChevronIcon />
+      </span>
+    </Link>
+  )
+}
+
 export function SettingsPage() {
   const { t } = useTranslation()
   const user = useUser()
-  const queryClient = useQueryClient()
+  const offline = useOffline()
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
-
-  async function signOut() {
-    await supabase.auth.signOut({ scope: 'local' })
-    queryClient.clear()
-  }
 
   return (
     <Screen
@@ -68,15 +76,13 @@ export function SettingsPage() {
             <LanguageSwitcher onChange={(locale) => updateProfile.mutate({ locale })} />
             {updateProfile.isError && <Message tone="error">{t('settings.saveError')}</Message>}
           </Card>
-          <Link to="/movements" className={`flex min-h-14 items-center justify-between rounded-2xl border border-line bg-surface px-4 font-semibold ${focusRing}`}>
-            {t('movements.title')}
-            <span className="text-ink-muted">
-              <ChevronIcon />
-            </span>
-          </Link>
+          <SettingsLink to="/houses" label={t('houses.title')} />
+          <SettingsLink to="/movements" label={t('movements.title')} />
+          <SettingsLink to="/my-data" label={t('myData.title')} />
           <Card>
             <p className="text-sm break-words text-ink-muted">{t('settings.signedInAs', { email: user.email })}</p>
-            <Button variant="secondary" onClick={() => void signOut()}>
+            {/* Los datos de este móvil se borran al perder la sesión (ver SessionCache). */}
+            <Button variant="secondary" disabled={offline} onClick={() => void supabase.auth.signOut({ scope: 'local' })}>
               {t('settings.signOut')}
             </Button>
           </Card>

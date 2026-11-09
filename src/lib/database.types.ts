@@ -116,6 +116,70 @@ export type Database = {
           },
         ]
       }
+      house_changes: {
+        Row: {
+          changed_at: string
+          house_id: string
+          version: number
+        }
+        Insert: {
+          changed_at?: string
+          house_id: string
+          version?: number
+        }
+        Update: {
+          changed_at?: string
+          house_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "house_changes_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: true
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      house_invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          house_id: string
+          id: string
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          house_id: string
+          id?: string
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          house_id?: string
+          id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "house_invites_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       house_members: {
         Row: {
           house_id: string
@@ -695,6 +759,9 @@ export type Database = {
         Returns: string
       }
       create_house: { Args: { p_name: string }; Returns: string }
+      create_invite: { Args: { p_house_id: string }; Returns: string }
+      delete_account: { Args: never; Returns: undefined }
+      delete_house: { Args: { p_house_id: string }; Returns: undefined }
       delete_product: { Args: { p_product_id: string }; Returns: undefined }
       discard: {
         Args: {
@@ -703,6 +770,18 @@ export type Database = {
           p_quantity?: number
         }
         Returns: string
+      }
+      export_my_data: { Args: never; Returns: Json }
+      join_house: { Args: { p_code: string }; Returns: string }
+      leave_house: { Args: { p_house_id: string }; Returns: undefined }
+      list_house_members: {
+        Args: { p_house_id: string }
+        Returns: {
+          display_name: string
+          joined_at: string
+          role: Database["public"]["Enums"]["member_role"]
+          user_id: string
+        }[]
       }
       move_lot: {
         Args: {
@@ -723,6 +802,15 @@ export type Database = {
         }
         Returns: string
       }
+      remove_member: {
+        Args: { p_house_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      rename_house: {
+        Args: { p_house_id: string; p_name: string }
+        Returns: undefined
+      }
+      revoke_invite: { Args: { p_invite_id: string }; Returns: undefined }
       set_remaining: {
         Args: { p_fraction: number; p_opened_unit_id: string }
         Returns: string

@@ -103,7 +103,85 @@
     "body": "Aquí guardarás lo que hay en el frigo, el congelador y la despensa.",
     "nameLabel": "Nombre de la casa",
     "defaultName": "Casa",
-    "submit": "Empezar"
+    "submit": "Empezar",
+    "join": "Me han invitado: unirme con un código"
+  },
+  "offline": {
+    "banner": "Sin conexión — solo lectura",
+    "noData": "No hay datos guardados de esta casa. Conéctate para cargarlos."
+  },
+  "houses": {
+    "title": "Casas",
+    "open": "Cambiar de casa. Ahora: {{name}}",
+    "choose": "Elige una casa",
+    "current": "Activa",
+    "manage": "Gestionar casas",
+    "create": "Crear una casa",
+    "createSubmit": "Crear casa",
+    "name": "Nombre de la casa",
+    "join": "Unirme con un código",
+    "notFound": "Ya no perteneces a esta casa.",
+    "use": "Usar esta casa",
+    "rename": "Cambiar el nombre",
+    "renameTitle": "Cambiar el nombre de la casa",
+    "roles": {
+      "owner": "Propietario/a",
+      "editor": "Editor/a"
+    },
+    "members": "Miembros",
+    "you": "tú",
+    "noName": "Sin nombre",
+    "thisPerson": "esta persona",
+    "expel": "Expulsar",
+    "expelTitle": "¿Expulsar a {{name}}?",
+    "expelBody": "Dejará de ver esta casa. Lo que hay en el inventario no cambia.",
+    "invite": {
+      "title": "Invitaciones",
+      "body": "Cada código sirve para una persona y caduca a los 7 días. Quien lo reciba necesita su propia cuenta.",
+      "create": "Invitar a alguien",
+      "expires": "Caduca el {{date}}",
+      "share": "Compartir",
+      "revoke": "Anular",
+      "copied": "Copiado. Pégalo donde quieras enviarlo.",
+      "shareText": "Te invito a «{{house}}» en Nevera digital. En la app, ve a Ajustes → Casas → Unirme con un código y escribe {{code}}. O abre este enlace:"
+    },
+    "leave": "Salir de la casa",
+    "leaveTitle": "¿Salir de {{name}}?",
+    "leaveBody": "Dejarás de verla. El inventario se queda para los demás.",
+    "leaveBodyOwner": "Dejarás de verla, y la propiedad pasará a quien lleve más tiempo en ella. El inventario se queda para los demás.",
+    "leaveSubmit": "Salir",
+    "delete": "Borrar la casa",
+    "deleteTitle": "¿Borrar {{name}}?",
+    "deleteBody": "Se borrará para todos sus miembros, con su inventario y su historial. No se puede deshacer.",
+    "deleteType": "Escribe «{{name}}» para confirmar",
+    "deleteSubmit": "Borrar para siempre"
+  },
+  "join": {
+    "title": "Unirme a una casa",
+    "body": "Escribe el código que te han pasado. Cada código sirve una sola vez.",
+    "code": "Código",
+    "placeholder": "ABCD-EFGH",
+    "submit": "Unirme"
+  },
+  "myData": {
+    "title": "Mis datos",
+    "export": {
+      "title": "Exportar",
+      "body": "Guarda en un archivo JSON tu perfil y todo lo que hay en tus casas.",
+      "prepare": "Preparar el archivo",
+      "ready": "El archivo está listo.",
+      "save": "Guardar el archivo"
+    },
+    "delete": {
+      "title": "Eliminar la cuenta",
+      "body": "Se borran tu cuenta, tu perfil y las casas en las que no hay nadie más. En las compartidas, el inventario se queda para los demás y, si eras propietario/a, la propiedad pasa a quien lleve más tiempo.",
+      "open": "Eliminar mi cuenta",
+      "sheetTitle": "¿Eliminar tu cuenta?",
+      "sheetBody": "No se puede deshacer. Si quieres conservar tus datos, expórtalos antes.",
+      "word": "ELIMINAR",
+      "type": "Escribe {{word}} para confirmar",
+      "submit": "Eliminar para siempre"
+    }
   },
   "inventory": {
     "searchLabel": "Buscar en el inventario",
@@ -233,6 +311,8 @@
       "title": "Mover",
       "freezeTitle": "Congelar",
       "thawTitle": "Descongelar",
+      "house": "A qué casa",
+      "thisHouse": "{{name}} (esta casa)",
       "to": "A dónde",
       "amount": "Cuánto",
       "freezeHint": "Sin fecha de aviso, no tendrá fecha mientras esté congelado.",
@@ -288,6 +368,10 @@
       "edited": "Se editaron los datos de {{name}}",
       "moved_one": "Se movió {{qty}} de {{name}} a {{zone}}",
       "moved_other": "Se movieron {{qty}} de {{name}} a {{zone}}",
+      "movedOut_one": "Se movió {{qty}} de {{name}} a {{house}} ({{zone}})",
+      "movedOut_other": "Se movieron {{qty}} de {{name}} a {{house}} ({{zone}})",
+      "movedIn_one": "Llegó {{qty}} de {{name}} desde {{house}} ({{zone}})",
+      "movedIn_other": "Llegaron {{qty}} de {{name}} desde {{house}} ({{zone}})",
       "frozen_one": "Se congeló {{qty}} de {{name}}",
       "frozen_other": "Se congelaron {{qty}} de {{name}}",
       "thawed_one": "Se descongeló {{qty}} de {{name}} ({{zone}})",
@@ -315,6 +399,10 @@
   },
   "errors": {
     "not_member": "No perteneces a esta casa.",
+    "not_owner": "Solo la persona propietaria de la casa puede hacer esto.",
+    "incompatible_product": "En esa casa ya hay un producto con ese nombre que se cuenta de otra forma. Cambia el nombre de uno de los dos y vuelve a probar.",
+    "invalid_invite": "Ese código no es válido, ya se ha usado o ha caducado. Pide otro.",
+    "already_member": "Ya perteneces a esa casa.",
     "not_found": "Esto ya no existe. Puede que otra persona lo haya cambiado.",
     "invalid_amount": "Esa cantidad no es válida.",
     "invalid_input": "Revisa los datos e inténtalo de nuevo.",

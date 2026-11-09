@@ -13,7 +13,9 @@ import { productIcon, productName, type Lot, type OpenedUnit, type Product, type
 import { formatPercent, formatNumber, formatQuantity, summarize, totalContent } from '../domain/quantity'
 import { statusOf, type RowDate } from '../domain/status'
 import type { ZoneKind } from '../domain/types'
+import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
+import { useFollowingState } from '../lib/followingState'
 import { supabase } from '../lib/supabase'
 import {
   AdjustSheet,
@@ -103,14 +105,15 @@ function UnitRow({ unit, product, onOpenSheet }: { unit: OpenedUnit; product: Pr
             {t(`product.fractions.${key}`)}
           </ActionChip>
         ))}
-        <ActionChip className="shrink-0" onClick={() => onOpenSheet({ type: 'exact', unit })}>
+        <ActionChip className="shrink-0" disabled={pending} onClick={() => onOpenSheet({ type: 'exact', unit })}>
           {t('product.fractions.exact')}
         </ActionChip>
       </div>
       <button
         type="button"
+        disabled={pending}
         onClick={() => onOpenSheet({ type: 'unitDates', unit })}
-        className="min-h-9 self-start text-sm font-medium text-brand"
+        className="min-h-9 self-start text-sm font-medium text-brand disabled:opacity-50"
       >
         {unit.reminder_date ? t('product.editReminder') : t('product.addReminder')}
       </button>
@@ -175,15 +178,15 @@ function LotCard({
             {isBulk ? t('product.actions.markOpen') : t('product.actions.openOne')}
           </ActionChip>
         )}
-        <ActionChip onClick={() => onOpenSheet({ type: 'adjust', lot })}>{t('product.actions.adjust')}</ActionChip>
-        <ActionChip onClick={() => onOpenSheet({ type: 'move', lot })}>{t('product.actions.move')}</ActionChip>
+        <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'adjust', lot })}>{t('product.actions.adjust')}</ActionChip>
+        <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'move', lot })}>{t('product.actions.move')}</ActionChip>
         {zoneKind === 'freezer' ? (
-          <ActionChip onClick={() => onOpenSheet({ type: 'move', lot, target: 'fridge' })}>{t('product.actions.thaw')}</ActionChip>
+          <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'move', lot, target: 'fridge' })}>{t('product.actions.thaw')}</ActionChip>
         ) : (
-          <ActionChip onClick={() => onOpenSheet({ type: 'move', lot, target: 'freezer' })}>{t('product.actions.freeze')}</ActionChip>
+          <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'move', lot, target: 'freezer' })}>{t('product.actions.freeze')}</ActionChip>
         )}
-        <ActionChip onClick={() => onOpenSheet({ type: 'discard', lot })}>{t('product.actions.discard')}</ActionChip>
-        <ActionChip onClick={() => onOpenSheet({ type: 'edit', lot })}>{t('product.actions.edit')}</ActionChip>
+        <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'discard', lot })}>{t('product.actions.discard')}</ActionChip>
+        <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'edit', lot })}>{t('product.actions.edit')}</ActionChip>
       </div>
     </div>
   )
@@ -192,8 +195,9 @@ function LotCard({
 function BrandForm({ product }: { product: Product }) {
   const { t } = useTranslation()
   const update = useProductUpdate()
-  const [preferred, setPreferred] = useState(product.preferred_brand ?? '')
-  const [notes, setNotes] = useState(product.brand_notes ?? '')
+  const offline = useOffline()
+  const [preferred, setPreferred] = useFollowingState(product.preferred_brand ?? '')
+  const [notes, setNotes] = useFollowingState(product.brand_notes ?? '')
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -219,7 +223,7 @@ function BrandForm({ product }: { product: Product }) {
         />
         {update.isSuccess && <Message tone="success">{t('settings.saved')}</Message>}
         {update.isError && <Message tone="error">{t(errorKey(update.error))}</Message>}
-        <Button type="submit" variant="secondary" disabled={update.isPending}>
+        <Button type="submit" variant="secondary" disabled={update.isPending || offline}>
           {t('common.save')}
         </Button>
       </form>
@@ -241,10 +245,11 @@ export function ProductPage() {
   const inventory = useInventory()
   const catalog = useCatalog()
   const { run, pending } = useInventoryAction()
+  const offline = useOffline()
   const [sheet, setSheet] = useState<SheetState | null>(null)
 
   if (inventory.isPending || catalog.isPending) return <FullScreenLoader />
-  if (inventory.isError) {
+  if (inventory.isLoadingError) {
     return <Screen title={t('app.name')} backTo="/" main={<LoadError onRetry={() => void inventory.refetch()} />} />
   }
 
@@ -312,7 +317,7 @@ export function ProductPage() {
       title={name}
       backTo="/"
       action={
-        <button type="button" aria-label={t('product.rename')} onClick={() => setSheet({ type: 'rename' })} className={topBarIcon}>
+        <button type="button" aria-label={t('product.rename')} disabled={offline} onClick={() => setSheet({ type: 'rename' })} className={`${topBarIcon} disabled:opacity-40`}>
           <PencilIcon />
         </button>
       }
@@ -364,10 +369,14 @@ export function ProductPage() {
           ) : (
             <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 text-center">
               <p className="font-semibold">{t('product.emptyTitle')}</p>
-              <Link to={`/add?product=${product.id}`} className={buttonClass()}>
-                {t('product.addMore')}
-              </Link>
-              <Button variant="danger" onClick={() => setSheet({ type: 'delete' })}>
+              {offline ? (
+                <Button disabled>{t('product.addMore')}</Button>
+              ) : (
+                <Link to={`/add?product=${product.id}`} className={buttonClass()}>
+                  {t('product.addMore')}
+                </Link>
+              )}
+              <Button variant="danger" disabled={offline} onClick={() => setSheet({ type: 'delete' })}>
                 {t('product.delete')}
               </Button>
             </div>

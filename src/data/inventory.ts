@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../components/Toast'
 import type { InventoryData, Lot, OpenedUnit } from '../domain/inventory'
+import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 import { useActiveHouseId } from './house'
@@ -55,6 +56,7 @@ export function useInventoryAction({ inlineErrors = false }: ActionOptions = {})
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { showUndo, showError } = useToast()
+  const offline = useOffline()
 
   const mutation = useMutation({
     mutationFn: async ({ call }: { toast: ToastKey; call: Rpc }) => {
@@ -79,7 +81,8 @@ export function useInventoryAction({ inlineErrors = false }: ActionOptions = {})
         () => true,
         () => false,
       ),
-    pending: mutation.isPending,
+    /** También sin conexión: el inventario es de solo lectura y los botones quedan desactivados. */
+    pending: mutation.isPending || offline,
     errorKey: mutation.error ? errorKey(mutation.error) : null,
   }
 }

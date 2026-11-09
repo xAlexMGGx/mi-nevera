@@ -6,6 +6,7 @@ import { PrintedDateFields } from '../../components/PrintedDateFields'
 import { Sheet } from '../../components/Sheet'
 import { Button, Message, Segmented, SelectField, Stepper, TextField } from '../../components/ui'
 import { useDateContext } from '../../data/context'
+import { useHouses, useHouseZones } from '../../data/house'
 import { useInventoryAction } from '../../data/inventory'
 import type { Lot, OpenedUnit, Product, Zone } from '../../domain/inventory'
 import { formatForInput, formatNumber, formatPercent, formatQuantity, parseAmount } from '../../domain/quantity'
@@ -160,29 +161,47 @@ export function MoveSheet({ product, lot, units, zones, target, onClose }: MoveS
   const { t } = useTranslation()
   const { tag } = useDateContext()
   const { run, pending, errorKey } = useInventoryAction({ inlineErrors: true })
+  const houses = useHouses()
   const currentZone = zones.find((zone) => zone.id === lot.zone_id)
   const others = zones.filter((zone) => zone.id !== lot.zone_id)
 
+  const [targetHouseId, setTargetHouseId] = useState(lot.house_id)
   const [targetKind, setTargetKind] = useState<ZoneKind>(target ?? others[0]!.kind)
   const [amount, setAmount] = useState(formatForInput(lot.quantity, tag))
   const [unitIds, setUnitIds] = useState(units.map((unit) => unit.id))
   const [reminder, setReminder] = useState('')
 
+  const otherHouse = targetHouseId !== lot.house_id
+  const otherHouseZones = useHouseZones(targetHouseId, otherHouse)
+  const targetZones = otherHouse ? (otherHouseZones.data ?? []) : others
+  const targetZoneId = targetZones.find((zone) => zone.kind === targetKind)?.id
+
   const parsed = parseAmount(amount)
-  const valid = parsed !== null && parsed >= 0 && parsed <= lot.quantity && (parsed > 0 || unitIds.length > 0)
-  const freezing = targetKind === 'freezer'
-  const thawing = currentZone?.kind === 'freezer'
+  const valid = parsed !== null && parsed >= 0 && parsed <= lot.quantity && (parsed > 0 || unitIds.length > 0) && Boolean(targetZoneId)
+  const freezing = targetKind === 'freezer' && currentZone?.kind !== 'freezer'
+  const thawing = currentZone?.kind === 'freezer' && targetKind !== 'freezer'
   const showReminder = freezing || thawing
-  const title = freezing ? t('sheets.move.freezeTitle') : thawing ? t('sheets.move.thawTitle') : t('sheets.move.title')
+  // Entre casas siempre es "mover", aunque de paso se congele o descongele.
+  const action = otherHouse ? 'move' : freezing ? 'freeze' : thawing ? 'thaw' : 'move'
+  const title = { move: t('sheets.move.title'), freeze: t('sheets.move.freezeTitle'), thaw: t('sheets.move.thawTitle') }[action]
+  const submit = { move: t('sheets.move.submit'), freeze: t('sheets.move.freezeSubmit'), thaw: t('sheets.move.thawSubmit') }[action]
+
+  function selectHouse(houseId: string) {
+    setTargetHouseId(houseId)
+    // En otra casa lo natural es dejarlo en la misma zona. En esta, ya está ahí.
+    if (houseId !== lot.house_id && currentZone) setTargetKind(currentZone.kind)
+    else if (currentZone?.kind === targetKind) setTargetKind(others[0]!.kind)
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!valid) return
-    const done = await run(freezing ? 'frozen' : thawing ? 'thawed' : 'moved', () =>
+    if (!valid || !targetZoneId) return
+    const toast = { move: 'moved', freeze: 'frozen', thaw: 'thawed' } as const
+    const done = await run(toast[action], () =>
       supabase.rpc('move_lot', {
         p_lot_id: lot.id,
         p_quantity: parsed,
-        p_target_zone_id: zones.find((zone) => zone.kind === targetKind)!.id,
+        p_target_zone_id: targetZoneId,
         p_opened_unit_ids: unitIds,
         p_reminder_date: showReminder && reminder ? reminder : undefined,
       }),
@@ -193,9 +212,18 @@ export function MoveSheet({ product, lot, units, zones, target, onClose }: MoveS
   return (
     <Sheet title={title} onClose={onClose}>
       <form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
+        {!target && houses.data && houses.data.length > 1 && (
+          <SelectField label={t('sheets.move.house')} value={targetHouseId} onChange={(event) => selectHouse(event.target.value)}>
+            {houses.data.map((house) => (
+              <option key={house.id} value={house.id}>
+                {house.id === lot.house_id ? t('sheets.move.thisHouse', { name: house.name }) : house.name}
+              </option>
+            ))}
+          </SelectField>
+        )}
         <Segmented
           label={t('sheets.move.to')}
-          options={others.map((zone) => ({ value: zone.kind, label: t(`zones.${zone.kind}`) }))}
+          options={targetZones.map((zone) => ({ value: zone.kind, label: t(`zones.${zone.kind}`) }))}
           value={targetKind}
           onChange={setTargetKind}
         />
@@ -212,7 +240,7 @@ export function MoveSheet({ product, lot, units, zones, target, onClose }: MoveS
         )}
         {errorKey && <Message tone="error">{t(errorKey)}</Message>}
         <Button type="submit" disabled={pending || !valid}>
-          {freezing ? t('sheets.move.freezeSubmit') : thawing ? t('sheets.move.thawSubmit') : t('sheets.move.submit')}
+          {submit}
         </Button>
       </form>
     </Sheet>

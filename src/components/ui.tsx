@@ -1,3 +1,4 @@
+import { useIsRestoring } from '@tanstack/react-query'
 import {
   useId,
   type ButtonHTMLAttributes,
@@ -8,6 +9,7 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n, { locales, type Locale } from '../i18n'
+import { useOffline } from '../lib/connectivity'
 import { MinusIcon, PlusIcon } from './icons'
 
 export const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
@@ -117,13 +119,29 @@ export function Card({ children }: { children: ReactNode }) {
   return <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">{children}</section>
 }
 
-export function FullScreenLoader() {
+/** Mientras se decide qué mostrar al arrancar. */
+export function BootLoader() {
   const { t } = useTranslation()
   return (
     <div role="status" className="flex min-h-dvh items-center justify-center text-ink-muted">
       {t('app.loading')}
     </div>
   )
+}
+
+/** Mientras llegan los datos. Sin conexión no van a llegar, así que lo dice. */
+export function FullScreenLoader() {
+  const { t } = useTranslation()
+  const offline = useOffline()
+  const restoring = useIsRestoring()
+  if (offline && !restoring) {
+    return (
+      <div role="status" className="flex min-h-dvh items-center justify-center p-6 text-center text-ink-muted">
+        {t('offline.noData')}
+      </div>
+    )
+  }
+  return <BootLoader />
 }
 
 export function LoadError({ onRetry }: { onRetry: () => void }) {
