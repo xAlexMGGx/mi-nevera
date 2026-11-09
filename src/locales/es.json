@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "Nevera digital",
+    "tagline": "Qué comida hay, cuánta y cuándo caduca.",
+    "loading": "Cargando…"
+  },
+  "language": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "auth": {
+    "fields": {
+      "name": "Tu nombre",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "newPassword": "Nueva contraseña",
+      "passwordHint": "Mínimo 8 caracteres."
+    },
+    "login": {
+      "title": "Inicia sesión",
+      "submit": "Entrar",
+      "forgot": "He olvidado mi contraseña",
+      "noAccount": "¿Aún no tienes cuenta?",
+      "toRegister": "Crear cuenta"
+    },
+    "register": {
+      "title": "Crea tu cuenta",
+      "submit": "Crear cuenta",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "toLogin": "Iniciar sesión",
+      "checkInboxTitle": "Revisa tu correo",
+      "checkInboxBody": "Te hemos enviado un enlace a {{email}} para confirmar la cuenta."
+    },
+    "forgot": {
+      "title": "Recupera tu contraseña",
+      "body": "Te enviaremos un enlace para elegir otra.",
+      "submit": "Enviar enlace",
+      "sent": "Si hay una cuenta con ese correo, te llegará un enlace en unos minutos.",
+      "back": "Volver a iniciar sesión"
+    },
+    "reset": {
+      "title": "Elige una contraseña nueva",
+      "submit": "Guardar contraseña",
+      "doneTitle": "Contraseña cambiada",
+      "doneBody": "Si usas la app instalada, vuelve a ella y entra con la contraseña nueva.",
+      "continue": "Continuar"
+    },
+    "errors": {
+      "invalidCredentials": "El correo o la contraseña no son correctos.",
+      "emailTaken": "Ya hay una cuenta con ese correo. Prueba a iniciar sesión.",
+      "invalidEmail": "Ese correo no parece válido.",
+      "weakPassword": "Esa contraseña es demasiado débil. Prueba con otra más larga.",
+      "samePassword": "La contraseña nueva debe ser distinta de la anterior.",
+      "signupDisabled": "El registro está cerrado. Pide a quien administra la app que lo abra.",
+      "rateLimited": "Demasiados intentos seguidos. Espera un rato y vuelve a probar.",
+      "emailNotAuthorized": "Todavía no podemos enviar correos a esa dirección. Pide ayuda a quien administra la app.",
+      "network": "No hay conexión con el servidor. Comprueba tu internet y vuelve a probar.",
+      "expiredLink": "Ese enlace ya no es válido. Pide otro desde \"He olvidado mi contraseña\".",
+      "unknown": "Algo ha fallado. Vuelve a probar en un momento."
+    }
+  },
+  "home": {
+    "greeting": "Hola, {{name}}",
+    "greetingNoName": "Hola",
+    "placeholder": "Aquí verás tu inventario muy pronto."
+  },
+  "settings": {
+    "open": "Abrir ajustes",
+    "back": "Volver",
+    "title": "Ajustes",
+    "profile": "Perfil",
+    "save": "Guardar",
+    "saved": "Guardado",
+    "saveError": "No se ha podido guardar. Vuelve a probar.",
+    "signedInAs": "Sesión iniciada como {{email}}",
+    "signOut": "Cerrar sesión"
+  },
+  "config": {
+    "missingTitle": "Falta configurar Supabase",
+    "missingBody": "Crea el archivo .env.local como explica el paso 4 de SETUP.md y vuelve a arrancar la app."
+  }
+}

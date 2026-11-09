@@ -1,0 +1,83 @@
+{
+  "app": {
+    "name": "Digital Fridge",
+    "tagline": "What food you have, how much, and when it expires.",
+    "loading": "Loading…"
+  },
+  "language": {
+    "label": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "auth": {
+    "fields": {
+      "name": "Your name",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "passwordHint": "At least 8 characters."
+    },
+    "login": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgot": "I forgot my password",
+      "noAccount": "Don't have an account yet?",
+      "toRegister": "Create account"
+    },
+    "register": {
+      "title": "Create your account",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "toLogin": "Sign in",
+      "checkInboxTitle": "Check your email",
+      "checkInboxBody": "We've sent a link to {{email}} to confirm your account."
+    },
+    "forgot": {
+      "title": "Recover your password",
+      "body": "We'll send you a link to choose a new one.",
+      "submit": "Send link",
+      "sent": "If there's an account with that email, a link will arrive in a few minutes.",
+      "back": "Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "submit": "Save password",
+      "doneTitle": "Password changed",
+      "doneBody": "If you use the installed app, go back to it and sign in with your new password.",
+      "continue": "Continue"
+    },
+    "errors": {
+      "invalidCredentials": "That email or password isn't right.",
+      "emailTaken": "There's already an account with that email. Try signing in.",
+      "invalidEmail": "That email doesn't look valid.",
+      "weakPassword": "That password is too weak. Try a longer one.",
+      "samePassword": "Your new password must be different from the old one.",
+      "signupDisabled": "Sign-ups are closed. Ask whoever runs the app to open them.",
+      "rateLimited": "Too many attempts in a row. Wait a while and try again.",
+      "emailNotAuthorized": "We can't send email to that address yet. Ask whoever runs the app for help.",
+      "network": "Can't reach the server. Check your internet connection and try again.",
+      "expiredLink": "That link is no longer valid. Request a new one from \"I forgot my password\".",
+      "unknown": "Something went wrong. Try again in a moment."
+    }
+  },
+  "home": {
+    "greeting": "Hi, {{name}}",
+    "greetingNoName": "Hi",
+    "placeholder": "Your inventory will show up here very soon."
+  },
+  "settings": {
+    "open": "Open settings",
+    "back": "Back",
+    "title": "Settings",
+    "profile": "Profile",
+    "save": "Save",
+    "saved": "Saved",
+    "saveError": "Couldn't save. Please try again.",
+    "signedInAs": "Signed in as {{email}}",
+    "signOut": "Sign out"
+  },
+  "config": {
+    "missingTitle": "Supabase isn't configured yet",
+    "missingBody": "Create the .env.local file as explained in step 4 of SETUP.md and restart the app."
+  }
+}
