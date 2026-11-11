@@ -17,6 +17,7 @@ Calcula unos 30 minutos. Ya tienes instalados Node y Git, así que no necesitas 
 9. Instalar la app en el móvil
 10. Cerrar el registro (más adelante)
 11. Enviar los correos con tu Gmail
+12. Activar las notificaciones
 
 Tu app quedará publicada en **https://xalexmggx.github.io/mi-nevera/**.
 
@@ -264,6 +265,61 @@ Con el correo propio, Supabase permite unos 30 correos por hora, de sobra para u
 
 ---
 
+## 12. Activar las notificaciones
+
+El aviso diario de caducidad lo envía Supabase cada hora en punto a quien tiene esa hora elegida. Necesita tres cosas: unas claves para firmar las notificaciones, dos pequeños programas en Supabase (Edge Functions) y una tarea programada. Calcula unos 15 minutos. Hazlo después de aplicar las migraciones de la Fase 3 (`npm run db:push`).
+
+**1. Generar las claves de las notificaciones**
+
+```powershell
+npm run push:keys
+```
+
+Crea el archivo `supabase/.env.functions` con la clave secreta (Git lo ignora) y muestra una línea como `VITE_VAPID_PUBLIC_KEY=BK...`. Esa clave es pública.
+
+> Genera las claves una sola vez. Si las cambias, cada persona tendrá que volver a activar las notificaciones en su móvil.
+
+**2. Poner la clave pública en la app**
+
+1. Añade la línea `VITE_VAPID_PUBLIC_KEY=...` que te ha mostrado al final de tu `.env.local`.
+2. En GitHub, en **Settings → Secrets and variables → Actions → Variables**, crea la variable `VITE_VAPID_PUBLIC_KEY` con el mismo valor (lo que va después del `=`).
+
+**3. Subir las claves secretas y las funciones a Supabase**
+
+```powershell
+npx supabase secrets set --env-file supabase/.env.functions
+npm run functions:deploy
+```
+
+El segundo comando sube `daily-digest` (el aviso diario) y `send-test-push` (la notificación de prueba). Después puedes borrar `supabase/.env.functions`: las claves ya están en Supabase y no hacen falta en tu ordenador.
+
+**4. Dar a la tarea programada lo que necesita para llamar al aviso diario**
+
+La tarea se creó con las migraciones, pero necesita la dirección de tu proyecto y la clave secreta. Se guardan cifradas en el Vault de Supabase:
+
+1. En Supabase, abre **Project Settings → API Keys** y copia la clave secreta (`sb_secret_...`) de la sección **Secret keys**. Pégala solo en el paso siguiente: nunca en el proyecto ni en un chat.
+2. Abre el **SQL Editor**, pega esto sustituyendo los dos valores y pulsa **Run**:
+
+   ```sql
+   select vault.create_secret('https://TU-PROJECT-ID.supabase.co', 'project_url');
+   select vault.create_secret('sb_secret_PEGA_AQUI_TU_CLAVE', 'secret_key');
+   ```
+
+**Compruébalo**
+
+1. Publica la app (paso 8) y ábrela en el iPhone **desde el icono de la pantalla de inicio**: desde Safari no se pueden recibir notificaciones.
+2. Ve a **Ajustes → Avisos y notificaciones**, pulsa **Activar en este móvil** y acepta el permiso.
+3. Pulsa **Enviar notificación de prueba**. Debe llegarte en unos segundos.
+4. Para el aviso diario, elige una hora que esté por llegar. Tras esa hora, en el **SQL Editor** puedes ver si la tarea se ejecutó:
+
+   ```sql
+   select status, return_message, start_time from cron.job_run_details order by start_time desc limit 5;
+   ```
+
+   El aviso solo llega si hay algo caducado o a punto de caducar en alguna de tus casas.
+
+---
+
 ## Trabajo habitual
 
 **Cuando una fase incluye migraciones nuevas**, aplícalas antes de publicar el código:
@@ -271,6 +327,12 @@ Con el correo propio, Supabase permite unos 30 correos por hora, de sobra para u
 ```powershell
 npm run db:push
 npm run db:types
+```
+
+**Cuando una fase cambia las Edge Functions** (carpeta `supabase/functions`), súbelas otra vez:
+
+```powershell
+npm run functions:deploy
 ```
 
 **Actualizar la app en el móvil:** se actualiza sola. Si no ves los cambios, ciérrala del todo y vuelve a abrirla, a veces dos veces.
@@ -283,7 +345,9 @@ npm run db:types
 | Clave `sb_publishable_` | No | `.env.local` y Variables de GitHub |
 | Contraseña de la base de datos | **Sí** | Solo en tu gestor de contraseñas |
 | Contraseña de aplicación de Gmail | **Sí** | Solo en Supabase, en SMTP Settings (paso 11) |
-| Clave `sb_secret_` | **Sí** | Solo en los secretos de Supabase, cuando una fase lo pida |
+| Clave `sb_secret_` | **Sí** | Solo en el Vault de Supabase (paso 12) |
+| Clave pública de notificaciones (`VITE_VAPID_PUBLIC_KEY`) | No | `.env.local` y Variables de GitHub (paso 12) |
+| Claves secretas de notificaciones (`supabase/.env.functions`) | **Sí** | Solo en los secretos de Supabase (paso 12). Git ignora el archivo |
 
 ## Si algo falla
 
@@ -297,4 +361,7 @@ npm run db:types
 | No llega el correo de recuperación | Revisa el spam. Si nunca llega, comprueba el paso 11: sin él, solo llega a los miembros de tu equipo de Supabase, con 2 correos por hora como máximo. |
 | Supabase da error al guardar SMTP Settings o al enviar | Revisa que Username y Sender email sean tu Gmail completo, y que la contraseña sea la de aplicación, sin espacios. Si sigue fallando, crea otra contraseña de aplicación. |
 | Un cambio en un móvil no aparece en el otro | Cierra la app del todo en los dos y vuelve a abrirla. Si sigue igual, comprueba que `npm run db:push` aplicó la migración de la Fase 2. |
+| La app dice "Las notificaciones aún no están configuradas" | Falta `VITE_VAPID_PUBLIC_KEY` en las Variables de GitHub (paso 12). Créala y vuelve a publicar. |
+| La notificación de prueba no llega | Abre la app desde el icono, no desde Safari. En los Ajustes del iPhone, comprueba **Notificaciones → Nevera** y que no haya un modo Concentración activo. Comprueba también que `npx supabase secrets list` muestra `VAPID_KEYS` y `VAPID_SUBJECT`. |
+| La prueba llega, pero el aviso diario no | Mira `cron.job_run_details` (paso 12). Si dice que falta la URL, revisa los nombres `project_url` y `secret_key` del Vault. Recuerda que solo llega si hay algo caducado o a punto de caducar. En Supabase, **Edge Functions → daily-digest → Logs** cuenta qué ha enviado. |
 | La app deja de responder tras días sin usarla | El plan gratuito pausa el proyecto tras una semana con poca actividad. Entra en Supabase y restáuralo: no se pierde ningún dato. |

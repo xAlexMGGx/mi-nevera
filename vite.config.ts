@@ -31,6 +31,8 @@ export default defineConfig({
         // Las pantallas de arranque de iOS no se precargan: cada móvil solo usa una.
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         globIgnores: ['**/apple-splash-*'],
+        // Recibir y abrir las notificaciones (public/push-sw.js).
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

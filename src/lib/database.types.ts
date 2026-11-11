@@ -580,6 +580,89 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shelf_life_guide: {
+        Row: {
+          catalog_item_id: string | null
+          category: Database["public"]["Enums"]["category"] | null
+          created_at: string
+          id: string
+          max_days: number | null
+          min_days: number | null
+          note_en: string
+          note_es: string
+          source: string
+          state: Database["public"]["Enums"]["shelf_state"]
+          updated_at: string
+        }
+        Insert: {
+          catalog_item_id?: string | null
+          category?: Database["public"]["Enums"]["category"] | null
+          created_at?: string
+          id?: string
+          max_days?: number | null
+          min_days?: number | null
+          note_en: string
+          note_es: string
+          source: string
+          state: Database["public"]["Enums"]["shelf_state"]
+          updated_at?: string
+        }
+        Update: {
+          catalog_item_id?: string | null
+          category?: Database["public"]["Enums"]["category"] | null
+          created_at?: string
+          id?: string
+          max_days?: number | null
+          min_days?: number | null
+          note_en?: string
+          note_es?: string
+          source?: string
+          state?: Database["public"]["Enums"]["shelf_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shelf_life_guide_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           created_at: string
@@ -748,6 +831,10 @@ export type Database = {
         Args: { p_lot_id: string; p_new_quantity: number }
         Returns: string
       }
+      claim_digest: {
+        Args: { p_day: string; p_house_id: string; p_user_id: string }
+        Returns: boolean
+      }
       consume: {
         Args: {
           p_all?: boolean
@@ -763,6 +850,11 @@ export type Database = {
       delete_account: { Args: never; Returns: undefined }
       delete_house: { Args: { p_house_id: string }; Returns: undefined }
       delete_product: { Args: { p_product_id: string }; Returns: undefined }
+      delete_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
+      digest_batch: { Args: { p_now?: string }; Returns: Json }
       discard: {
         Args: {
           p_lot_id: string
@@ -772,6 +864,10 @@ export type Database = {
         Returns: string
       }
       export_my_data: { Args: never; Returns: Json }
+      forget_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
       join_house: { Args: { p_code: string }; Returns: string }
       leave_house: { Args: { p_house_id: string }; Returns: undefined }
       list_house_members: {
@@ -811,6 +907,15 @@ export type Database = {
         Returns: undefined
       }
       revoke_invite: { Args: { p_invite_id: string }; Returns: undefined }
+      save_push_subscription: {
+        Args: {
+          p_auth: string
+          p_endpoint: string
+          p_p256dh: string
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
       set_remaining: {
         Args: { p_fraction: number; p_opened_unit_id: string }
         Returns: string
@@ -863,6 +968,13 @@ export type Database = {
       printed_date_type: "expiry" | "best_before"
       product_kind: "food" | "cooked_dish"
       quantity_kind: "count" | "divisible" | "bulk"
+      shelf_state:
+        | "opened"
+        | "frozen"
+        | "thawed"
+        | "cooked"
+        | "closed_fridge"
+        | "closed_pantry"
       zone_kind: "fridge" | "freezer" | "pantry"
     }
     CompositeTypes: {
@@ -1029,6 +1141,14 @@ export const Constants = {
       printed_date_type: ["expiry", "best_before"],
       product_kind: ["food", "cooked_dish"],
       quantity_kind: ["count", "divisible", "bulk"],
+      shelf_state: [
+        "opened",
+        "frozen",
+        "thawed",
+        "cooked",
+        "closed_fridge",
+        "closed_pantry",
+      ],
       zone_kind: ["fridge", "freezer", "pantry"],
     },
   },

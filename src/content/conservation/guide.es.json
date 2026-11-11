@@ -1,0 +1,50 @@
+{
+  "sections": [
+    {
+      "id": "temperatures",
+      "title": "Temperaturas recomendadas",
+      "items": [
+        { "text": "Frigorífico: a 4 °C o menos.", "sources": ["fda-chart-2018", "fsis-basics-2011"] },
+        { "text": "La AESAN sitúa la temperatura ideal de refrigeración entre 0 y 5 °C.", "sources": ["aesan-colocar"] },
+        { "text": "Congelador: a −18 °C o menos.", "sources": ["fda-chart-2018", "fsis-basics-2011"] },
+        { "text": "Un termómetro de frigorífico ayuda a comprobar las dos temperaturas.", "sources": ["fsis-basics-2011", "aesan-colocar"] }
+      ]
+    },
+    {
+      "id": "dates",
+      "title": "Las fechas que importan",
+      "items": [
+        { "text": "Fecha de caducidad: indica hasta cuándo el alimento puede consumirse de forma segura. No se debe consumir ningún alimento una vez superada.", "sources": ["aesan-fechas"] },
+        { "text": "Antes de que caduque, un alimento se puede congelar en casa para alargar su vida.", "sources": ["aesan-fechas"] },
+        { "text": "Consumo preferente: indica hasta cuándo conserva la calidad prevista. Pasada esa fecha sigue siendo seguro, aunque puede perder sabor y textura.", "sources": ["aesan-fechas"] },
+        { "text": "Después de abrir: sigue las instrucciones de consumo que trae la etiqueta para cuando el envase está abierto.", "sources": ["aesan-fechas"] },
+        { "text": "Fecha de congelación: a −18 °C los alimentos se mantienen seguros indefinidamente. Los plazos de congelación indican hasta cuándo conservan su calidad.", "sources": ["fda-chart-2018", "fsis-basics-2011"] },
+        { "text": "En esta app, la fecha de aviso es la que pones tú, o la que aceptas con un chip orientativo, al abrir, congelar, descongelar o guardar un táper. Si la fecha de caducidad impresa llega antes, manda la impresa." }
+      ]
+    },
+    {
+      "id": "freezing",
+      "title": "Congelar y descongelar",
+      "items": [
+        { "text": "Descongela en el frigorífico, cuidando de que los jugos de la carne y el pollo no goteen sobre otros alimentos.", "sources": ["fsis-basics-2011"] },
+        { "text": "Con prisa, en agua fría: dentro de una bolsa que no deje pasar el agua, cambiando el agua cada 30 minutos, y cocinándolo justo después.", "sources": ["fsis-basics-2011"] },
+        { "text": "En el microondas: cocina la carne y el pollo justo después de descongelarlos.", "sources": ["fsis-basics-2011"] },
+        { "text": "Volver a congelar: la carne y el pollo descongelados en el frigorífico se pueden volver a congelar antes o después de cocinarlos. Si se descongelaron de otra forma, hay que cocinarlos antes.", "sources": ["fsis-basics-2011"] },
+        { "text": "La AESAN no permite a los establecimientos volver a congelar alimentos, salvo que se hayan transformado, por ejemplo al cocinarlos.", "sources": ["aesan-higiene"] },
+        { "text": "Tras un corte de luz, solo se puede volver a congelar lo que no se ha descongelado del todo y no ha pasado de 5 °C. Si no sabes cuánto tiempo ha estado descongelado, deséchalo.", "sources": ["aesan-apagon"] },
+        { "text": "Para congelar carne o pollo más de 2 meses en su envase original, envuélvelo además en papel de aluminio grueso, film o papel de congelación, o mételo en una bolsa.", "sources": ["fda-chart-2018"] }
+      ]
+    },
+    {
+      "id": "fridge",
+      "title": "Organización de la nevera",
+      "items": [
+        { "text": "Guarda la carne y el pollo crudos bien envueltos, para que sus jugos no caigan sobre otros alimentos.", "sources": ["fsis-basics-2011"] },
+        { "text": "Mantén la carne, el pollo y el pescado crudos, y sus jugos, lejos de otros alimentos. Después de cortarlos, lava manos, tabla, cuchillo y encimera con agua caliente y jabón.", "sources": ["fsis-basics-2011"] },
+        { "text": "Mete los alimentos perecederos en el frigorífico antes de 2 horas, o de 1 hora si hace más de 32 °C.", "sources": ["fsis-basics-2011"] },
+        { "text": "Sobras: guárdalas en recipientes poco profundos y mételas enseguida en el frigorífico o el congelador. Consúmelas en un máximo de 4 días y recaliéntalas hasta 74 °C.", "sources": ["fsis-basics-2011"] },
+        { "text": "Conservas abiertas: lo que sobra se puede guardar en la lata dentro del frigorífico, pero se conserva mejor en un recipiente de vidrio o de plástico.", "sources": ["fsis-shelf-stable-2014"] }
+      ]
+    }
+  ]
+}

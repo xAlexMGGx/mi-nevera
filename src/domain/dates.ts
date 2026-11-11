@@ -18,10 +18,12 @@ function toUtc(iso: string): Date {
   return new Date(Date.UTC(year!, month! - 1, day!))
 }
 
-export function addDays(iso: string, days: number): string {
-  const date = toUtc(iso)
-  date.setUTCDate(date.getUTCDate() + days)
-  return date.toISOString().slice(0, 10)
+// La comparte con la notificación diaria.
+export { addDays } from '../../supabase/functions/_shared/dateStatus.ts'
+
+/** Días entre dos fechas ISO: positivo si `to` es posterior. */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((toUtc(to).getTime() - toUtc(from).getTime()) / 86_400_000)
 }
 
 /** "1 oct", y con el año si no es el actual: "1 oct 2028". */

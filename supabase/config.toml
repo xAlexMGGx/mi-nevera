@@ -393,6 +393,14 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Las dos funciones comprueban quién llama con @supabase/server: daily-digest exige la clave secreta,
+# y send-test-push, la sesión de la persona. Por eso no hace falta la comprobación previa de la plataforma.
+[functions.daily-digest]
+verify_jwt = false
+
+[functions.send-test-push]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

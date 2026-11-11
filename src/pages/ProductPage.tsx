@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { PencilIcon } from '../components/icons'
 import { Screen, topBarIcon } from '../components/Screen'
+import { ShelfLifeChip } from '../components/ShelfLifeChip'
 import { StatusBadge } from '../components/StatusBadge'
 import { ActionChip, Button, Card, FullScreenLoader, LoadError, Message, TextAreaField, TextField, buttonClass } from '../components/ui'
 import { useCatalog } from '../data/catalog'
@@ -90,6 +91,18 @@ function UnitRow({ unit, product, onOpenSheet }: { unit: OpenedUnit; product: Pr
         <p className="text-xs text-ink-muted">{t('product.openedSince', { date: formatDate(unit.opened_at, tag, today) })}</p>
       </div>
       <DateBadge item={unit} />
+      <ShelfLifeChip
+        product={product}
+        state="opened"
+        baseDate={unit.opened_at}
+        value={unit.reminder_date ?? ''}
+        disabled={pending}
+        onChange={(value) =>
+          void run('edited', () =>
+            supabase.rpc('update_opened_unit', { p_opened_unit_id: unit.id, p_patch: { reminder_date: value || null } }),
+          )
+        }
+      />
       <div className="flex gap-1.5">
         {fractions.map(({ key, value }) => (
           <ActionChip
@@ -163,6 +176,16 @@ function LotCard({
           {lot.opened_at && <span>{t('product.openedSince', { date: formatDate(lot.opened_at, tag, today) })}</span>}
         </div>
         {(lot.quantity > 0 || units.length === 0) && <DateBadge item={lot} />}
+        {lot.opened_at && !isDish && (
+          <ShelfLifeChip
+            product={product}
+            state="opened"
+            baseDate={lot.opened_at}
+            value={lot.reminder_date ?? ''}
+            disabled={pending}
+            onChange={(value) => void run('edited', () => supabase.rpc('update_lot', { p_lot_id: lot.id, p_patch: { reminder_date: value || null } }))}
+          />
+        )}
       </div>
 
       {units.map((unit) => (

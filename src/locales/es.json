@@ -22,6 +22,7 @@
   "nav": {
     "label": "Navegación principal",
     "inventory": "Inventario",
+    "alerts": "Avisos",
     "add": "Añadir"
   },
   "zones": {
@@ -163,6 +164,86 @@
     "placeholder": "ABCD-EFGH",
     "submit": "Unirme"
   },
+  "alerts": {
+    "title": "Avisos",
+    "sections": {
+      "expired": "Caducado",
+      "review": "Revisar",
+      "soon": "Pronto",
+      "opened": "Abiertos"
+    },
+    "emptyTitle": "Todo en orden",
+    "emptyBody": "No hay nada caducado, pasado de fecha ni a punto de caducar.",
+    "unitLine": "Abierto, queda {{percent}}",
+    "openedToday": "Abierto hoy",
+    "openedYesterday": "Abierto ayer",
+    "openedDays_one": "Abierto hace {{count}} día",
+    "openedDays_other": "Abierto hace {{count}} días",
+    "finish": "Terminado",
+    "discard": "Tirar",
+    "view": "Ver",
+    "conservation": "Conservación y seguridad"
+  },
+  "shelfLife": {
+    "chip": "Orientativo: {{period}}",
+    "chipHint": "Tócalo para usarlo como fecha de aviso.",
+    "chipSelected": "Puesto como fecha de aviso; tócalo otra vez para quitarlo.",
+    "pending": "Plazo pendiente de revisión.",
+    "more": "Por qué",
+    "period": {
+      "days_one": "{{range}} día",
+      "days_other": "{{range}} días",
+      "weeks_one": "{{range}} semana",
+      "weeks_other": "{{range}} semanas",
+      "months_one": "{{range}} mes",
+      "months_other": "{{range}} meses",
+      "years_one": "{{range}} año",
+      "years_other": "{{range}} años"
+    }
+  },
+  "conservation": {
+    "title": "Conservación y seguridad",
+    "pending": "PENDIENTE DE REVISIÓN: este contenido aún no se ha comprobado con sus fuentes.",
+    "disclaimer": "Información orientativa: no sustituye a la etiqueta del producto, y la app no decide si un alimento es seguro.",
+    "timesTitle": "Tiempos orientativos",
+    "timesIntro": "Son los plazos que proponen los chips. Los de congelación indican hasta cuándo se conserva la calidad: a −18 °C, lo congelado sigue siendo seguro.",
+    "states": {
+      "opened": "Después de abrir",
+      "frozen": "En el congelador",
+      "thawed": "Tras descongelar en el frigorífico",
+      "cooked": "Sobras y tápers"
+    },
+    "categoryFallback": "{{category}} (productos propios y tápers)",
+    "dontFreeze": "No congelar",
+    "sourcesTitle": "Fuentes",
+    "consulted": "Consultadas el {{date}}."
+  },
+  "notifications": {
+    "title": "Avisos y notificaciones",
+    "device": "Este móvil",
+    "status": {
+      "notConfigured": "Las notificaciones aún no están configuradas en esta app.",
+      "unsupported": "Este navegador no permite recibir notificaciones.",
+      "needsInstall": "En iPhone, las notificaciones solo llegan con la app instalada en la pantalla de inicio. Ábrela desde el icono Nevera para activarlas.",
+      "denied": "Las notificaciones están bloqueadas. Actívalas en los ajustes del móvil, en Notificaciones → Nevera, y vuelve aquí.",
+      "on": "Activadas en este móvil.",
+      "off": "Desactivadas en este móvil."
+    },
+    "enable": "Activar en este móvil",
+    "disable": "Desactivar en este móvil",
+    "test": "Enviar notificación de prueba",
+    "testSent": "Enviada. Debería llegarte en unos segundos.",
+    "testNone": "Este móvil no tiene las notificaciones activadas.",
+    "testFailed": "No se ha podido enviar. Vuelve a probar en un momento.",
+    "iphone": "En iPhone hace falta iOS 16.4 o posterior y tener la app instalada en la pantalla de inicio.",
+    "daily": "Aviso diario",
+    "dailyBody": "Un resumen por casa con lo caducado y lo que caduca pronto. Si no hay nada, no llega.",
+    "enabled": "Recibir el aviso diario",
+    "hour": "Hora",
+    "timezone": "Hora de {{zone}}.",
+    "daysAhead": "Días de antelación",
+    "daysAheadHint": "También decide qué se marca como «Pronto» en el inventario."
+  },
   "myData": {
     "title": "Mis datos",
     "export": {
@@ -216,6 +297,8 @@
     "searchLabel": "Buscar un producto",
     "searchPlaceholder": "¿Qué quieres añadir?",
     "inHouse": "Ya en tu casa",
+    "noStock": "Sin existencias",
+    "delete": "Eliminar {{name}}",
     "create": "Crear «{{name}}»",
     "leftover": "Añadir un táper o resto"
   },

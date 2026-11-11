@@ -5,6 +5,8 @@ import { BootLoader } from './components/ui'
 import { rememberInvite } from './lib/pendingInvite'
 import { AddLeftoverPage } from './pages/AddLeftoverPage'
 import { AddPage } from './pages/AddPage'
+import { AlertsPage } from './pages/AlertsPage'
+import { ConservationPage } from './pages/ConservationPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HousePage } from './pages/HousePage'
 import { HousesPage } from './pages/HousesPage'
@@ -13,6 +15,7 @@ import { JoinPage } from './pages/JoinPage'
 import { LoginPage } from './pages/LoginPage'
 import { MovementsPage } from './pages/MovementsPage'
 import { MyDataPage } from './pages/MyDataPage'
+import { NotificationsPage } from './pages/NotificationsPage'
 import { ProductPage } from './pages/ProductPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
@@ -49,7 +52,10 @@ export function App() {
       <Route element={<RequireHouse />}>
         <Route element={<TabsLayout />}>
           <Route index element={<InventoryPage />} />
+          <Route path="/alerts" element={<AlertsPage />} />
         </Route>
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/conservation" element={<ConservationPage />} />
         <Route path="/add" element={<AddPage />} />
         <Route path="/add/leftover" element={<AddLeftoverPage />} />
         <Route path="/product/:id" element={<ProductPage />} />

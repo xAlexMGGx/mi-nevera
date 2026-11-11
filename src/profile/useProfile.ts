@@ -5,6 +5,7 @@ import i18n, { isLocale } from '../i18n'
 import type { Database } from '../lib/database.types'
 import { supabase } from '../lib/supabase'
 
+type Profile = Database['public']['Tables']['profiles']['Row']
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
 export function profileKey(userId: string) {
@@ -23,6 +24,7 @@ export function useProfile() {
   })
 }
 
+/** Se ve el cambio al momento y, si el servidor lo rechaza, se deshace. */
 export function useUpdateProfile() {
   const { id } = useUser()
   const queryClient = useQueryClient()
@@ -31,6 +33,15 @@ export function useUpdateProfile() {
       const { data, error } = await supabase.from('profiles').update(patch).eq('id', id).select().single()
       if (error) throw error
       return data
+    },
+    onMutate: async (patch) => {
+      await queryClient.cancelQueries({ queryKey: profileKey(id) })
+      const previous = queryClient.getQueryData<Profile>(profileKey(id))
+      if (previous) queryClient.setQueryData<Profile>(profileKey(id), { ...previous, ...patch } as Profile)
+      return { previous }
+    },
+    onError: (_error, _patch, context) => {
+      if (context?.previous) queryClient.setQueryData(profileKey(id), context.previous)
     },
     onSuccess: (profile) => queryClient.setQueryData(profileKey(id), profile),
   })

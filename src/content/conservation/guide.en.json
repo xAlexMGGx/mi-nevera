@@ -1,0 +1,50 @@
+{
+  "sections": [
+    {
+      "id": "temperatures",
+      "title": "Recommended temperatures",
+      "items": [
+        { "text": "Fridge: 4 °C (40 °F) or below.", "sources": ["fda-chart-2018", "fsis-basics-2011"] },
+        { "text": "AESAN places the ideal refrigeration temperature between 0 and 5 °C.", "sources": ["aesan-colocar"] },
+        { "text": "Freezer: −18 °C (0 °F) or below.", "sources": ["fda-chart-2018", "fsis-basics-2011"] },
+        { "text": "A fridge thermometer helps you check both temperatures.", "sources": ["fsis-basics-2011", "aesan-colocar"] }
+      ]
+    },
+    {
+      "id": "dates",
+      "title": "The dates that matter",
+      "items": [
+        { "text": "Use-by date: how long the food can be eaten safely. No food should be eaten once it has passed.", "sources": ["aesan-fechas"] },
+        { "text": "Before its use-by date, food can be frozen at home to make it last longer.", "sources": ["aesan-fechas"] },
+        { "text": "Best-before date: how long the food keeps its expected quality. After that date it is still safe, although it may lose flavour and texture.", "sources": ["aesan-fechas"] },
+        { "text": "After opening: follow the label's instructions for once the package is open.", "sources": ["aesan-fechas"] },
+        { "text": "Freezing date: at −18 °C food stays safe indefinitely. Freezer times tell you how long it keeps its quality.", "sources": ["fda-chart-2018", "fsis-basics-2011"] },
+        { "text": "In this app, the reminder date is the one you set, or accept with a guidance chip, when you open, freeze or thaw something, or store leftovers. If the printed use-by date comes first, the printed date wins." }
+      ]
+    },
+    {
+      "id": "freezing",
+      "title": "Freezing and thawing",
+      "items": [
+        { "text": "Thaw in the fridge, making sure juices from meat and poultry don't drip onto other food.", "sources": ["fsis-basics-2011"] },
+        { "text": "In a hurry, in cold water: in a leak-proof bag, changing the water every 30 minutes, and cooking it right away.", "sources": ["fsis-basics-2011"] },
+        { "text": "In the microwave: cook meat and poultry right after thawing them.", "sources": ["fsis-basics-2011"] },
+        { "text": "Refreezing: meat and poultry thawed in the fridge can be refrozen before or after cooking. If they were thawed another way, cook them first.", "sources": ["fsis-basics-2011"] },
+        { "text": "AESAN does not allow food businesses to refreeze food unless it has been processed, for example cooked.", "sources": ["aesan-higiene"] },
+        { "text": "After a power cut, only refreeze food that has not fully thawed and has stayed at 5 °C or below. If you don't know how long it has been thawed, throw it away.", "sources": ["aesan-apagon"] },
+        { "text": "To freeze meat or poultry for more than 2 months in its original package, also wrap it in heavy-duty foil, plastic wrap or freezer paper, or put it in a bag.", "sources": ["fda-chart-2018"] }
+      ]
+    },
+    {
+      "id": "fridge",
+      "title": "Organising the fridge",
+      "items": [
+        { "text": "Keep raw meat and poultry well wrapped, so their juices don't get onto other food.", "sources": ["fsis-basics-2011"] },
+        { "text": "Keep raw meat, poultry and fish, and their juices, away from other food. After cutting them, wash hands, cutting board, knife and worktop with hot, soapy water.", "sources": ["fsis-basics-2011"] },
+        { "text": "Refrigerate perishable food within 2 hours, or 1 hour if it is above 32 °C (90 °F).", "sources": ["fsis-basics-2011"] },
+        { "text": "Leftovers: store them in shallow containers and put them in the fridge or freezer right away. Eat them within 4 days and reheat them to 74 °C (165 °F).", "sources": ["fsis-basics-2011"] },
+        { "text": "Opened cans: leftovers can be kept in the can in the fridge, but they keep better in a glass or plastic container.", "sources": ["fsis-shelf-stable-2014"] }
+      ]
+    }
+  ]
+}

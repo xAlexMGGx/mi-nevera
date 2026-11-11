@@ -1,9 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { ChevronIcon, SearchIcon } from '../components/icons'
+import { ChevronIcon, SearchIcon, TrashIcon } from '../components/icons'
 import { PrintedDateFields } from '../components/PrintedDateFields'
 import { Screen } from '../components/Screen'
+import { ShelfLifeChip } from '../components/ShelfLifeChip'
 import { Button, FullScreenLoader, LoadError, Message, SelectField, Stepper, TextField, focusRing } from '../components/ui'
 import { useCatalog } from '../data/catalog'
 import { useDateContext } from '../data/context'
@@ -28,6 +29,7 @@ import {
   type ZoneKind,
 } from '../domain/types'
 import { supabase } from '../lib/supabase'
+import { DeleteProductSheet } from './product/sheets'
 
 type Selection =
   | { type: 'product'; product: Product }
@@ -41,27 +43,34 @@ interface PickerEntry {
   searchTerms: string[]
   subtitle: string
   selection: Selection
+  /** Producto de la casa sin existencias: se puede eliminar desde aquí. */
+  emptyProduct?: Product
 }
 
 function ProductPicker({ data, catalog, items, onPick }: { data: InventoryData; catalog: CatalogById; items: CatalogItem[]; onPick: (selection: Selection) => void }) {
   const { t } = useTranslation()
   const { language, tag } = useDateContext()
+  const { pending } = useInventoryAction()
   const [query, setQuery] = useState('')
+  const [deleting, setDeleting] = useState<{ product: Product; name: string } | null>(null)
 
   const entries = useMemo<PickerEntry[]>(() => {
     const inHouse = new Set(data.products.map((product) => product.catalog_item_id))
+    const withStock = new Set(data.lots.map((lot) => lot.product_id))
     const byName = (a: PickerEntry, b: PickerEntry) => a.name.localeCompare(b.name, tag, { sensitivity: 'base' })
     const fromHouse = data.products
       .filter((product) => product.kind === 'food')
       .map<PickerEntry>((product) => {
         const item = product.catalog_item_id ? catalog.get(product.catalog_item_id) : undefined
+        const stocked = withStock.has(product.id)
         return {
           key: product.id,
           name: productName(product, catalog, language),
           icon: productIcon(product, catalog),
           searchTerms: item ? [item.name_es, item.name_en, ...item.synonyms_es, ...item.synonyms_en] : [product.name],
-          subtitle: t('add.inHouse'),
+          subtitle: stocked ? t('add.inHouse') : t('add.noStock'),
           selection: { type: 'product', product },
+          emptyProduct: stocked ? undefined : product,
         }
       })
       .sort(byName)
@@ -77,7 +86,7 @@ function ProductPicker({ data, catalog, items, onPick }: { data: InventoryData; 
       }))
       .sort(byName)
     return [...fromHouse, ...fromCatalog]
-  }, [data.products, catalog, items, language, tag, t])
+  }, [data.products, data.lots, catalog, items, language, tag, t])
 
   const search = useMemo(() => createSearch(entries), [entries])
   const results = search(query)
@@ -103,11 +112,11 @@ function ProductPicker({ data, catalog, items, onPick }: { data: InventoryData; 
           {results.length === 0 && createButton}
           <ul className="flex flex-col gap-2">
             {results.map((entry) => (
-              <li key={entry.key}>
+              <li key={entry.key} className="flex items-center rounded-2xl border border-line bg-surface">
                 <button
                   type="button"
                   onClick={() => onPick(entry.selection)}
-                  className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border border-line bg-surface px-3 py-2 text-left ${focusRing}`}
+                  className={`flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-2 text-left ${focusRing}`}
                 >
                   <span aria-hidden="true" className="w-9 shrink-0 text-center text-2xl leading-none">
                     {entry.icon}
@@ -116,14 +125,35 @@ function ProductPicker({ data, catalog, items, onPick }: { data: InventoryData; 
                     <span className="block truncate font-semibold">{entry.name}</span>
                     <span className="block truncate text-sm text-ink-muted">{entry.subtitle}</span>
                   </span>
-                  <span className="shrink-0 text-ink-muted">
-                    <ChevronIcon />
-                  </span>
+                  {!entry.emptyProduct && (
+                    <span className="shrink-0 text-ink-muted">
+                      <ChevronIcon />
+                    </span>
+                  )}
                 </button>
+                {entry.emptyProduct && (
+                  <button
+                    type="button"
+                    aria-label={t('add.delete', { name: entry.name })}
+                    disabled={pending}
+                    onClick={() => setDeleting({ product: entry.emptyProduct!, name: entry.name })}
+                    className={`mr-1 flex size-11 shrink-0 items-center justify-center rounded-xl text-ink-muted active:bg-line disabled:opacity-40 ${focusRing}`}
+                  >
+                    <TrashIcon />
+                  </button>
+                )}
               </li>
             ))}
           </ul>
           {results.length > 0 && createButton}
+          {deleting && (
+            <DeleteProductSheet
+              product={deleting.product}
+              name={deleting.name}
+              onClose={() => setDeleting(null)}
+              onDeleted={() => setDeleting(null)}
+            />
+          )}
         </div>
       }
     >
@@ -348,6 +378,13 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
             <>
               <p className="text-sm text-ink-muted">{t('form.frozenHint')}</p>
               <TextField label={t('form.frozenAt')} type="date" value={frozenAt} onChange={(event) => setFrozenAt(event.target.value)} />
+              <ShelfLifeChip
+                product={{ catalog_item_id: existing?.catalog_item_id ?? item?.id ?? null, category: existing?.category ?? item?.category ?? category }}
+                state="frozen"
+                baseDate={frozenAt || today}
+                value={reminderDate}
+                onChange={setReminderDate}
+              />
               <TextField label={t('form.reminder')} hint={t('form.reminderHint')} type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} />
             </>
           )}

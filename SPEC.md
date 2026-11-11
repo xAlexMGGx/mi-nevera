@@ -129,8 +129,9 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 
 ### 5.5 Fases posteriores
 
-- **`push_subscriptions`** (fase 3): `user_id`, `endpoint`, `p256dh`, `auth`, `user_agent`.
-- **`shelf_life_guide`** (fase 3): `catalog_item_id` o `category`, `state` (`opened`|`frozen`|`thawed`|`cooked`|`closed_fridge`|`closed_pantry`), `min_days`, `max_days`, `note_es`, `note_en`, `source`.
+- **`push_subscriptions`** (fase 3): `user_id`, `endpoint`, `p256dh`, `auth`, `user_agent`. Una por móvil. Si en el móvil entra otra cuenta, la suscripción pasa a ella.
+- **`shelf_life_guide`** (fase 3): `catalog_item_id` o `category`, `state` (`opened`|`frozen`|`thawed`|`cooked`|`closed_fridge`|`closed_pantry`), `min_days`, `max_days`, `note_es`, `note_en`, `source`. Sin días, la fuente desaconseja ese estado (por ejemplo, congelar huevos con cáscara). Se genera a partir de `src/content/conservation/shelf-life.json`.
+- **`private.digest_log`** (fase 3): `user_id`, `house_id`, `day`. Lo ya avisado, para no repetir el aviso diario.
 - **`shopping_items`** (fase 6): `house_id`, `product_id` (nullable), `name`, `quantity_text`, `preferred_brand`, `checked`, `origin` (`manual`|`finished`|`recipe`).
 - **`recipe_favorites`** (fase 7): `user_id`, `house_id`, `title`, `recipe jsonb`.
 - **`recipe_blocked`** (fase 7): `user_id`, `title_normalized`.
@@ -169,6 +170,8 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | `list_house_members(house_id)` | Nombre, rol y fecha de entrada de cada miembro. No da acceso al resto del perfil |
 | `leave_house(house_id)` / `remove_member(house_id, user_id)` | Salir o expulsar (solo el propietario). Si se va el propietario, la propiedad pasa al miembro más antiguo; si no queda nadie, la casa se borra. Quien se queda sin su casa activa pasa a otra de las suyas o a la bienvenida |
 | `export_my_data()` / `delete_account()` | Exportan el perfil y las casas a JSON, o eliminan la cuenta con las reglas de §6 |
+| `save_push_subscription(...)` / `delete_push_subscription(endpoint)` | Activan o desactivan las notificaciones en un móvil. No registran movimiento |
+| `digest_batch()` / `claim_digest(...)` / `forget_push_subscription(endpoint)` | Solo para la Edge Function `daily-digest`, con la clave secreta: a quién avisar ahora y con qué fechas, apuntar lo avisado y olvidar suscripciones caducadas |
 
 ---
 
@@ -268,6 +271,11 @@ Implementarlo una sola vez (vista SQL o función compartida) y usarlo en inventa
 
 Al abrir, congelar, descongelar o crear un táper, se muestra un chip según `shelf_life_guide`, p. ej. "Orientativo: consumir en 3–4 días". Un toque fija `reminder_date = hoy + max_days`; otro toque lo quita. Sin tocar, queda vacío.
 
+- "Hoy" es el día en que se abrió, congeló, descongeló o cocinó. Añadir algo directamente al congelador también es congelar.
+- Los productos del catálogo usan sus propias filas de la guía; los productos propios y los tápers, las de su categoría. Sin fila, no hay chip.
+- Si la fuente desaconseja ese estado, en lugar del chip se muestra el aviso, por ejemplo "Huevos con cáscara: no congelar".
+- Mientras el propietario no haya revisado el contenido (§9), el chip dice que el plazo está pendiente de revisión.
+
 ### 7.4 Fechas aprendidas (fase 4)
 
 - Para un producto con **≥ 3** `date_samples` del mismo tipo, sugerir `hoy + mediana(días)` como chip: "¿20 nov? (como sueles)".
@@ -293,6 +301,8 @@ Al abrir, congelar, descongelar o crear un táper, se muestra un chip según `sh
 - **Notificación push diaria** a **todos los miembros** de la casa con `notify_enabled = true`, a su `notify_hour` local.
   - Una sola notificación por casa y día, con resumen: "Casa · 2 caducan hoy, 3 en los próximos 2 días". Al pulsarla, abre la pantalla Avisos de esa casa.
   - No enviar si no hay nada que avisar.
+  - Cuenta productos, como las filas del inventario: caducados, que caducan hoy y que caducan en los próximos `notify_days_ahead` días. "Revisar" (consumo preferente pasado) se ve en la pantalla Avisos, pero no se notifica cada día.
+  - La hora es la de la zona horaria del perfil, que se toma del móvil al activar las notificaciones.
 - Implementación: `pg_cron` cada hora → Edge Function `daily-digest` que selecciona los usuarios cuya hora local coincide y envía Web Push.
 - En Ajustes: activar/desactivar, hora, días de antelación, botón "Enviar notificación de prueba".
 - Explicar en la app que en iPhone hay que tenerla instalada en la pantalla de inicio para recibir avisos.
@@ -317,6 +327,7 @@ Sección informativa dentro de Ajustes (y enlazada desde los chips y desde la pa
 - Marcar todo el contenido como **PENDIENTE DE REVISIÓN** hasta que el propietario lo confirme.
 - Contenido en archivos de datos (JSON/Markdown) separados del código, para poder actualizarlo sin tocar componentes.
 - Aviso visible: la información es orientativa y no sustituye a la etiqueta del producto.
+- Las fuentes, cómo se consultó cada una y lo que falta están en `src/content/conservation/SOURCES.md`. FoodSafety.gov, FSIS y FoodKeeper bloquean la lectura automática, así que se usaron la tabla de la FDA (equivalente a la de FoodSafety.gov) y fichas oficiales de FSIS desde la imprenta del Gobierno de EE. UU.
 
 ---
 
@@ -541,11 +552,22 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 2 · Casas compartidas. Código terminado, pendiente de aplicar la migración, configurar el correo, desplegar y confirmar con dos móviles.
+**Fase actual:** 3 · Avisos y conservación. Código terminado, pendiente de aplicar las migraciones, activar las notificaciones (`SETUP.md`, paso 12), desplegar, confirmar en el iPhone y revisar el contenido de conservación.
 
 ### Hecho
 
-**Fase 2 · Casas compartidas**
+**Fase 3 · Avisos y conservación**
+
+- Pantalla Avisos (pestaña de la barra inferior): Caducado, Revisar, Pronto y Abiertos, con −1 o Terminado, Tirar y Ver.
+- Notificación diaria: suscripción por móvil, Edge Function `daily-digest` cada hora con `pg_cron`, una por persona, casa y día, en su idioma y su zona horaria.
+- Ajustes → Avisos y notificaciones: activar o desactivar en cada móvil, hora, días de antelación, notificación de prueba (Edge Function `send-test-push`) y explicación del iPhone.
+- Conservación y seguridad: contenido en `src/content/conservation` con la fuente de cada frase y de cada plazo, marcado como pendiente de revisión.
+- `shelf_life_guide` y chips orientativos al abrir, congelar, descongelar, guardar un táper y añadir al congelador.
+- La regla de estado vive en `supabase/functions/_shared/dateStatus.ts` y la usan la app y la notificación diaria.
+- Tests: suscripciones, quién recibe el aviso según su hora y zona horaria, una sola vez al día, permisos, resumen y textos, plazos y su migración, y el envío Web Push cifrado, comprobado en Deno.
+- Corregido: un producto agotado salía en Añadir como "Ya en tu casa" y no había forma de eliminarlo si se había consumido desde la lista. Ahora sale como "Sin existencias", con su botón de eliminar.
+
+**Fase 2 · Casas compartidas (confirmada)**
 
 - Varias casas: crear, cambiar desde el selector de la cabecera, renombrar y borrar (propietario).
 - Invitaciones con código o enlace, de un solo uso y válidas 7 días. Unirse desde la bienvenida o desde Ajustes → Casas.
@@ -582,9 +604,9 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ### Pendiente
 
-- **Fase 2:** aplicar la migración, configurar el correo, publicar y comprobar la aceptación con dos móviles. El recorrido se ha probado contra el SQL real, pero con la API y el tiempo real de Supabase emulados y en Edge.
-- **Fase 3:** sin empezar, a la espera de confirmación del propietario.
-- **Para la fase 3:** el aviso real de `reminder_date`; hasta entonces solo afecta al color y al orden.
+- **Fase 3:** aplicar las migraciones, activar las notificaciones (`SETUP.md`, paso 12), publicar y comprobar la aceptación en el iPhone. Probado contra el SQL real con la API emulada, y el envío cifrado en Deno sin red; falta la entrega real del servicio de Apple.
+- **Revisión del propietario:** comprobar el contenido de conservación con sus fuentes (`src/content/conservation/SOURCES.md`) y poner `reviewed: true` en `review.json`. Faltan los lácteos abiertos, sin fuente accesible.
+- **Fase 4:** sin empezar, a la espera de confirmación del propietario.
 
 ### Decisiones tomadas (2026-11-09)
 
@@ -619,3 +641,13 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **Eliminar la cuenta:** es una función de la base de datos, no una Edge Function. Todo ocurre en una sola transacción y sin claves secretas.
 - **Correo:** Gmail con contraseña de aplicación, que no necesita dominio propio y basta para una familia. Si algún día hay dominio, se puede cambiar a un servicio de envío como Brevo o Resend sin tocar el código.
 - **Exportar:** en el móvil, el archivo se guarda con Compartir → Guardar en Archivos; en el ordenador, se descarga.
+
+**Fase 3**
+
+- **Fuentes de conservación:** FoodSafety.gov, FSIS y FoodKeeper bloquean la lectura automática. Se usaron la tabla de la FDA y fichas oficiales de FSIS de la imprenta del Gobierno de EE. UU., además de AESAN. Dos datos salen del extracto del buscador y están marcados para verificar. Sin fuente, no hay chip: por eso los lácteos abiertos no tienen.
+- **Qué notifica el aviso diario:** caducados, que caducan hoy y próximos, contados por producto. "Revisar" no se notifica cada día, para no repetir lo mismo a diario con algo que sigue siendo seguro.
+- **Zona horaria:** se toma del móvil al activar las notificaciones, para que llegue a la hora local también fuera de la península.
+- **Envío:** Edge Functions con `@supabase/server` y `@negrel/webpush`. La tarea horaria llama con la clave secreta, guardada en el Vault de Supabase; las claves VAPID son secretos de las Edge Functions. Nada de eso está en el repo.
+- **Notificación de prueba:** va solo al móvil desde el que se pide.
+- **Cerrar sesión:** el móvil deja de recibir las notificaciones de esa cuenta.
+- **Ajustes del perfil:** se ven cambiados al momento y, si el servidor los rechaza, vuelven atrás.

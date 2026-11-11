@@ -22,6 +22,7 @@
   "nav": {
     "label": "Main navigation",
     "inventory": "Inventory",
+    "alerts": "Alerts",
     "add": "Add"
   },
   "zones": {
@@ -163,6 +164,86 @@
     "placeholder": "ABCD-EFGH",
     "submit": "Join"
   },
+  "alerts": {
+    "title": "Alerts",
+    "sections": {
+      "expired": "Expired",
+      "review": "Check",
+      "soon": "Soon",
+      "opened": "Open"
+    },
+    "emptyTitle": "All good",
+    "emptyBody": "Nothing has expired, gone past its date or is about to expire.",
+    "unitLine": "Open, {{percent}} left",
+    "openedToday": "Opened today",
+    "openedYesterday": "Opened yesterday",
+    "openedDays_one": "Opened {{count}} day ago",
+    "openedDays_other": "Opened {{count}} days ago",
+    "finish": "Finished",
+    "discard": "Throw away",
+    "view": "View",
+    "conservation": "Food storage and safety"
+  },
+  "shelfLife": {
+    "chip": "Guide: {{period}}",
+    "chipHint": "Tap to use it as the reminder date.",
+    "chipSelected": "Set as the reminder date; tap again to remove it.",
+    "pending": "Pending review.",
+    "more": "Why",
+    "period": {
+      "days_one": "{{range}} day",
+      "days_other": "{{range}} days",
+      "weeks_one": "{{range}} week",
+      "weeks_other": "{{range}} weeks",
+      "months_one": "{{range}} month",
+      "months_other": "{{range}} months",
+      "years_one": "{{range}} year",
+      "years_other": "{{range}} years"
+    }
+  },
+  "conservation": {
+    "title": "Food storage and safety",
+    "pending": "PENDING REVIEW: this content has not yet been checked against its sources.",
+    "disclaimer": "Guidance only: it does not replace the product label, and the app does not decide whether food is safe.",
+    "timesTitle": "Guide times",
+    "timesIntro": "These are the times the chips suggest. Freezer times show how long quality lasts: at −18 °C, frozen food stays safe.",
+    "states": {
+      "opened": "After opening",
+      "frozen": "In the freezer",
+      "thawed": "After thawing in the fridge",
+      "cooked": "Leftovers"
+    },
+    "categoryFallback": "{{category}} (your own products and leftovers)",
+    "dontFreeze": "Don't freeze",
+    "sourcesTitle": "Sources",
+    "consulted": "Consulted on {{date}}."
+  },
+  "notifications": {
+    "title": "Alerts and notifications",
+    "device": "This phone",
+    "status": {
+      "notConfigured": "Notifications haven't been set up in this app yet.",
+      "unsupported": "This browser can't receive notifications.",
+      "needsInstall": "On iPhone, notifications only arrive when the app is installed on the home screen. Open it from the Nevera icon to turn them on.",
+      "denied": "Notifications are blocked. Turn them on in your phone's settings, under Notifications → Nevera, and come back.",
+      "on": "On for this phone.",
+      "off": "Off for this phone."
+    },
+    "enable": "Turn on for this phone",
+    "disable": "Turn off for this phone",
+    "test": "Send a test notification",
+    "testSent": "Sent. It should arrive in a few seconds.",
+    "testNone": "Notifications aren't turned on for this phone.",
+    "testFailed": "It couldn't be sent. Try again in a moment.",
+    "iphone": "iPhone needs iOS 16.4 or later and the app installed on the home screen.",
+    "daily": "Daily alert",
+    "dailyBody": "One summary per home with what has expired and what expires soon. If there's nothing, it doesn't arrive.",
+    "enabled": "Get the daily alert",
+    "hour": "Time",
+    "timezone": "{{zone}} time.",
+    "daysAhead": "Days in advance",
+    "daysAheadHint": "Also decides what's marked as “Soon” in the inventory."
+  },
   "myData": {
     "title": "My data",
     "export": {
@@ -216,6 +297,8 @@
     "searchLabel": "Search for a product",
     "searchPlaceholder": "What do you want to add?",
     "inHouse": "Already in your home",
+    "noStock": "Out of stock",
+    "delete": "Delete {{name}}",
     "create": "Create “{{name}}”",
     "leftover": "Add a leftovers container"
   },

@@ -9,6 +9,9 @@ import './i18n'
 import './index.css'
 import { isSupabaseConfigured } from './lib/supabase'
 import { ConfigMissingPage } from './pages/ConfigMissingPage'
+import { listenForNotificationClicks } from './push/push'
+
+listenForNotificationClicks()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

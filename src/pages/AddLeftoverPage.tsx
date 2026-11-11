@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { Screen } from '../components/Screen'
+import { ShelfLifeChip } from '../components/ShelfLifeChip'
 import { Button, FullScreenLoader, LoadError, Message, SelectField, Stepper, TextField } from '../components/ui'
 import { useDateContext } from '../data/context'
 import { useActiveHouseId } from '../data/house'
@@ -85,6 +86,14 @@ export function AddLeftoverPage() {
             placeholder={nextNumber.data ? String(nextNumber.data) : undefined}
             value={number}
             onChange={(event) => setNumber(event.target.value)}
+          />
+          {/* En el congelador, el plazo es el de congelación y cuenta desde hoy. */}
+          <ShelfLifeChip
+            product={{ catalog_item_id: null, category: 'cooked' }}
+            state={zone === 'freezer' ? 'frozen' : 'cooked'}
+            baseDate={zone === 'freezer' ? today : cookedAt || today}
+            value={reminderDate}
+            onChange={setReminderDate}
           />
           <TextField label={t('form.reminder')} hint={t('form.reminderHint')} type="date" value={reminderDate} onChange={(event) => setReminderDate(event.target.value)} />
 

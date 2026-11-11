@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { PrintedDateFields } from '../../components/PrintedDateFields'
+import { ShelfLifeChip } from '../../components/ShelfLifeChip'
 import { Sheet } from '../../components/Sheet'
 import { Button, Message, Segmented, SelectField, Stepper, TextField } from '../../components/ui'
 import { useDateContext } from '../../data/context'
@@ -159,7 +160,7 @@ interface MoveSheetProps {
 
 export function MoveSheet({ product, lot, units, zones, target, onClose }: MoveSheetProps) {
   const { t } = useTranslation()
-  const { tag } = useDateContext()
+  const { tag, today } = useDateContext()
   const { run, pending, errorKey } = useInventoryAction({ inlineErrors: true })
   const houses = useHouses()
   const currentZone = zones.find((zone) => zone.id === lot.zone_id)
@@ -230,13 +231,16 @@ export function MoveSheet({ product, lot, units, zones, target, onClose }: MoveS
         {lot.quantity > 0 && <AmountField product={product} label={t('sheets.move.amount')} value={amount} max={lot.quantity} onChange={setAmount} />}
         <UnitChecklist units={units} selected={unitIds} onChange={setUnitIds} />
         {showReminder && (
-          <TextField
-            label={t('form.reminder')}
-            hint={t(freezing ? 'sheets.move.freezeHint' : 'sheets.move.thawHint')}
-            type="date"
-            value={reminder}
-            onChange={(event) => setReminder(event.target.value)}
-          />
+          <>
+            <ShelfLifeChip product={product} state={freezing ? 'frozen' : 'thawed'} baseDate={today} value={reminder} onChange={setReminder} />
+            <TextField
+              label={t('form.reminder')}
+              hint={t(freezing ? 'sheets.move.freezeHint' : 'sheets.move.thawHint')}
+              type="date"
+              value={reminder}
+              onChange={(event) => setReminder(event.target.value)}
+            />
+          </>
         )}
         {errorKey && <Message tone="error">{t(errorKey)}</Message>}
         <Button type="submit" disabled={pending || !valid}>
@@ -247,11 +251,20 @@ export function MoveSheet({ product, lot, units, zones, target, onClose }: MoveS
   )
 }
 
-export function DiscardSheet({ product, lot, units, onClose }: { product: Product; lot: Lot; units: OpenedUnit[]; onClose: () => void }) {
+interface DiscardSheetProps {
+  product: Product
+  lot: Lot
+  units: OpenedUnit[]
+  /** Cuánto de lo cerrado se propone tirar. Sin indicarlo, todo. */
+  initialAmount?: number
+  onClose: () => void
+}
+
+export function DiscardSheet({ product, lot, units, initialAmount, onClose }: DiscardSheetProps) {
   const { t } = useTranslation()
   const { tag } = useDateContext()
   const { run, pending, errorKey } = useInventoryAction({ inlineErrors: true })
-  const [amount, setAmount] = useState(formatForInput(lot.quantity, tag))
+  const [amount, setAmount] = useState(formatForInput(initialAmount ?? lot.quantity, tag))
   const [unitIds, setUnitIds] = useState(units.map((unit) => unit.id))
   const parsed = parseAmount(amount)
   const valid = parsed !== null && parsed >= 0 && parsed <= lot.quantity && (parsed > 0 || unitIds.length > 0)
@@ -482,7 +495,15 @@ export function RenameSheet({ product, name, onClose }: { product: Product; name
   )
 }
 
-export function DeleteProductSheet({ product, name, onClose }: { product: Product; name: string; onClose: () => void }) {
+interface DeleteProductSheetProps {
+  product: Product
+  name: string
+  onClose: () => void
+  /** Sin indicarlo, vuelve al inventario, porque el detalle del producto deja de existir. */
+  onDeleted?: () => void
+}
+
+export function DeleteProductSheet({ product, name, onClose, onDeleted }: DeleteProductSheetProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -493,7 +514,8 @@ export function DeleteProductSheet({ product, name, onClose }: { product: Produc
       if (error) throw error
     },
     onSuccess: async () => {
-      await navigate('/', { replace: true })
+      if (onDeleted) onDeleted()
+      else await navigate('/', { replace: true })
       await queryClient.invalidateQueries({ queryKey: ['inventory'] })
     },
   })

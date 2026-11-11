@@ -16,7 +16,10 @@
     "check": "npm run lint && npm run typecheck && npm run test",
     "catalog:migration": "node scripts/buildCatalogMigration.ts",
     "db:push": "supabase db push --remote",
-    "db:types": "supabase gen types --lang=typescript --remote --schema public > src/lib/database.types.ts"
+    "db:types": "supabase gen types --lang=typescript --remote --schema public > src/lib/database.types.ts",
+    "shelf-life:migration": "node scripts/buildShelfLifeMigration.ts",
+    "push:keys": "node scripts/generateVapidKeys.ts",
+    "functions:deploy": "supabase functions deploy daily-digest send-test-push --use-api"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

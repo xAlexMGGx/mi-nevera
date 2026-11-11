@@ -9,6 +9,7 @@ import { useOffline } from '../lib/connectivity'
 import { useFollowingState } from '../lib/followingState'
 import { supabase } from '../lib/supabase'
 import { useProfile, useUpdateProfile } from '../profile/useProfile'
+import { forgetThisDevice } from '../push/push'
 
 function ProfileForm({ initialName }: { initialName: string }) {
   const { t } = useTranslation()
@@ -61,6 +62,12 @@ export function SettingsPage() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
 
+  async function signOut() {
+    // Los avisos de esta cuenta dejan de llegar a este móvil.
+    await forgetThisDevice()
+    await supabase.auth.signOut({ scope: 'local' })
+  }
+
   return (
     <Screen
       title={t('settings.title')}
@@ -77,12 +84,14 @@ export function SettingsPage() {
             {updateProfile.isError && <Message tone="error">{t('settings.saveError')}</Message>}
           </Card>
           <SettingsLink to="/houses" label={t('houses.title')} />
+          <SettingsLink to="/notifications" label={t('notifications.title')} />
+          <SettingsLink to="/conservation" label={t('conservation.title')} />
           <SettingsLink to="/movements" label={t('movements.title')} />
           <SettingsLink to="/my-data" label={t('myData.title')} />
           <Card>
             <p className="text-sm break-words text-ink-muted">{t('settings.signedInAs', { email: user.email })}</p>
             {/* Los datos de este móvil se borran al perder la sesión (ver SessionCache). */}
-            <Button variant="secondary" disabled={offline} onClick={() => void supabase.auth.signOut({ scope: 'local' })}>
+            <Button variant="secondary" disabled={offline} onClick={() => void signOut()}>
               {t('settings.signOut')}
             </Button>
           </Card>

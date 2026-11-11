@@ -1,0 +1,61 @@
+{
+  "consulted": "2026-11-11",
+  "sources": [
+    {
+      "id": "aesan-fechas",
+      "publisher": "AESAN",
+      "title_es": "Fecha de caducidad y fecha de consumo preferente (16/10/2024)",
+      "title_en": "Use-by and best-before dates (16/10/2024)",
+      "url": "https://aesan.gob.es/actualidad/actualidad-noticias/fechas"
+    },
+    {
+      "id": "aesan-apagon",
+      "publisher": "AESAN",
+      "title_es": "Qué hacer con los alimentos del frigorífico y del congelador después del apagón (29/04/2025)",
+      "title_en": "What to do with fridge and freezer food after a power cut (29/04/2025)",
+      "url": "https://aesan.gob.es/actualidad/actualidad-noticias/alimentos_refrigerados"
+    },
+    {
+      "id": "aesan-colocar",
+      "publisher": "AESAN",
+      "title_es": "Para la ciudadanía: colocar los alimentos de forma segura",
+      "title_en": "For citizens: storing food safely",
+      "url": "https://www.aesan.gob.es/AECOSAN/web/para_el_consumidor/ampliacion/colocar_segura.htm"
+    },
+    {
+      "id": "aesan-higiene",
+      "publisher": "AESAN",
+      "title_es": "Higiene de los alimentos (requisitos para establecimientos)",
+      "title_en": "Food hygiene (requirements for businesses)",
+      "url": "https://www.aesan.gob.es/seguridad-alimentaria/higiene-alimentos"
+    },
+    {
+      "id": "fda-chart-2018",
+      "publisher": "FDA",
+      "title_es": "Refrigerator & Freezer Storage Chart (marzo de 2018)",
+      "title_en": "Refrigerator & Freezer Storage Chart (March 2018)",
+      "url": "https://www.fda.gov/media/74435/download"
+    },
+    {
+      "id": "fsis-basics-2011",
+      "publisher": "USDA FSIS",
+      "title_es": "Basics for Handling Food Safely (revisado en junio de 2011)",
+      "title_en": "Basics for Handling Food Safely (revised June 2011)",
+      "url": "https://www.govinfo.gov/content/pkg/GOVPUB-A110-PURL-gpo26772/pdf/GOVPUB-A110-PURL-gpo26772.pdf"
+    },
+    {
+      "id": "fsis-shelf-stable-2014",
+      "publisher": "USDA FSIS",
+      "title_es": "Shelf-Stable Food Safety (actualizado en agosto de 2014)",
+      "title_en": "Shelf-Stable Food Safety (updated August 2014)",
+      "url": "https://www.govinfo.gov/content/pkg/GOVPUB-A110-PURL-gpo38739/pdf/GOVPUB-A110-PURL-gpo38739.pdf"
+    },
+    {
+      "id": "fsis-big-thaw",
+      "publisher": "USDA FSIS",
+      "title_es": "The Big Thaw — Safe Defrosting Methods (copia archivada)",
+      "title_en": "The Big Thaw — Safe Defrosting Methods (archived copy)",
+      "url": "https://webarchive.library.unt.edu/web/20121007115729/http://www.fsis.usda.gov/Fact_Sheets/Big_Thaw/index.asp"
+    }
+  ]
+}
