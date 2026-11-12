@@ -16,8 +16,17 @@ const pageSize = 50
 
 const columns = 'id, seq, type, product_name, catalog_item_id, details, created_at'
 
+interface TicketItem {
+  name: string
+  catalog_item_id: string | null
+}
+
 interface MovementDetails {
   amount?: number
+  /** Ticket aplicado: la tienda, cuántos productos y cuáles. */
+  store?: string | null
+  count?: number
+  items?: TicketItem[]
   fraction?: number
   edited?: boolean
   zone?: ZoneKind
@@ -78,9 +87,23 @@ function movementText(movement: Movement, catalog: CatalogById, t: TFunction, ta
       return t('movements.types.discarded', { count: amount, qty, name })
     case 'cooked':
       return t('movements.types.cooked', { number: details.container_number, name, qty })
+    case 'ticket_applied':
+      return details.store
+        ? t('movements.types.ticketFrom', { count: details.count ?? 0, store: details.store })
+        : t('movements.types.ticket', { count: details.count ?? 0 })
     default:
       return t('movements.types.other', { name })
   }
+}
+
+/** "Leche, Yogur natural, Tomates": cada producto del catálogo en el idioma de quien mira. */
+function ticketItems(items: TicketItem[], catalog: CatalogById, language: string): string {
+  return items
+    .map((item) => {
+      const entry = item.catalog_item_id ? catalog.get(item.catalog_item_id) : undefined
+      return entry ? (language === 'en' ? entry.name_en : entry.name_es) : item.name
+    })
+    .join(', ')
 }
 
 export function MovementsPage() {
@@ -128,7 +151,12 @@ export function MovementsPage() {
             <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface">
               {entries.map((movement) => (
                 <li key={movement.id} className="flex items-baseline gap-3 px-3.5 py-3">
-                  <p className="min-w-0 flex-1">{movementText(movement, catalog.byId, t, tag, language)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p>{movementText(movement, catalog.byId, t, tag, language)}</p>
+                    {movement.details.items && movement.details.items.length > 0 && (
+                      <p className="text-sm text-ink-muted">{ticketItems(movement.details.items, catalog.byId, language)}</p>
+                    )}
+                  </div>
                   <time className="shrink-0 text-xs text-ink-muted">{formatTime(movement.created_at, tag, timezone)}</time>
                 </li>
               ))}

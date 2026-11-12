@@ -36,6 +36,11 @@ export function formatDate(iso: string, localeTag: string, today: string): strin
   }).format(toUtc(iso))
 }
 
+/** "20 de noviembre de 2026", para confirmar una fecha leída. */
+export function formatFullDate(iso: string, localeTag: string): string {
+  return new Intl.DateTimeFormat(localeTag, { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' }).format(toUtc(iso))
+}
+
 /** "01/11" (SPEC: dd/mm). */
 export function formatDayMonth(iso: string): string {
   return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`

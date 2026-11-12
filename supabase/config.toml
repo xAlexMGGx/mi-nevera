@@ -393,13 +393,22 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
-# Las dos funciones comprueban quién llama con @supabase/server: daily-digest exige la clave secreta,
-# y send-test-push, la sesión de la persona. Por eso no hace falta la comprobación previa de la plataforma.
+# Las funciones comprueban quién llama con @supabase/server: daily-digest exige la clave secreta, y
+# las demás, la sesión de la persona. Por eso no hace falta la comprobación previa de la plataforma.
 [functions.daily-digest]
 verify_jwt = false
 
 [functions.send-test-push]
 verify_jwt = false
+
+# Las de IA comparten con los tests de la app la validación con Zod (_shared), que se resuelve con su deno.json.
+[functions.parse-receipt]
+verify_jwt = false
+import_map = "./functions/parse-receipt/deno.json"
+
+[functions.read-date]
+verify_jwt = false
+import_map = "./functions/read-date/deno.json"
 
 [analytics]
 enabled = true

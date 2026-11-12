@@ -302,6 +302,118 @@
     "create": "Create “{{name}}”",
     "leftover": "Add a leftovers container"
   },
+  "addMenu": {
+    "title": "Add",
+    "manual": "Add manually",
+    "barcode": "Scan barcode",
+    "ticket": "Scan receipt"
+  },
+  "barcode": {
+    "title": "Barcode",
+    "hint": "Fit the barcode inside the frame.",
+    "manualLabel": "Barcode",
+    "manualPlaceholder": "Or type the number",
+    "search": "Search",
+    "invalid": "Type only the digits of the barcode (6 to 14).",
+    "lookingUp": "Looking up {{code}}…",
+    "notFound": "This product is not in Open Food Facts.",
+    "notFoundShort": "Product without data",
+    "offline": "Open Food Facts couldn't be reached.",
+    "fillByHand": "You can fill in the details by hand: the barcode will be saved anyway.",
+    "code": "Barcode {{code}}",
+    "use": "Use this product",
+    "useCode": "Continue with the barcode",
+    "again": "Scan another",
+    "source": "Data from Open Food Facts",
+    "scan": "Scan barcode",
+    "scanToFill": "Scan barcode",
+    "pickProduct": "Choose the product from your home or the catalog, or create it by name.",
+    "remove": "Remove barcode"
+  },
+  "camera": {
+    "starting": "Opening the camera…",
+    "denied": "There's no permission to use the camera. You can allow it in the phone settings or take the photo with the system camera.",
+    "unavailable": "The camera can't be opened here. You can take the photo with the system camera.",
+    "retry": "Try again"
+  },
+  "readDate": {
+    "open": "Read date with the camera",
+    "title": "Read date",
+    "chainTitle": "Dates in a row",
+    "chainNow": "Now: {{name}} · {{current}} of {{total}}",
+    "hint": "Bring the camera close to the date printed on the package.",
+    "shoot": "Take photo",
+    "reading": "Reading the date…",
+    "skip": "Skip",
+    "retake": "Retake photo",
+    "notFound": "No date was found. Type it or retake the photo.",
+    "lowConfidence": "Check the date: it isn't clearly legible.",
+    "monthOnly": "The package only shows month and year: the last day of the month is used.",
+    "yearAssumed": "The package doesn't show the year: {{year}} was assumed.",
+    "recognized": "Text read: “{{text}}”",
+    "chooseType": "Say whether it's a use-by or a best-before date.",
+    "confirm": "Confirm",
+    "confirmNext": "Confirm and continue",
+    "correct": "Correct"
+  },
+  "learned": {
+    "chip": "{{date}}? (as usual)",
+    "hint": {
+      "expiry_one": "Use-by, based on {{count}} purchase.",
+      "expiry_other": "Use-by, based on your last {{count}} purchases.",
+      "best_before_one": "Best before, based on {{count}} purchase.",
+      "best_before_other": "Best before, based on your last {{count}} purchases."
+    },
+    "tap": "Tap to set it.",
+    "selected": "Tap again to remove it."
+  },
+  "ticket": {
+    "title": "Scan receipt",
+    "photoHint": "Take a photo of the whole receipt, flat and well lit. If it is very long, take it in several parts (up to 3), from top to bottom.",
+    "takePhoto": "Take a photo of the receipt",
+    "fromGallery": "Choose from gallery",
+    "part": "Part {{number}}",
+    "removePart": "Remove part {{number}}",
+    "addPart": "Add another part",
+    "read": "Read receipt",
+    "reading": "Reading the receipt… It can take half a minute.",
+    "nothingFound": "No products were found in the photo.",
+    "addByHand": "Add by hand",
+    "privacy": "The photo is sent to Claude (Anthropic) only to read it, and it is not stored. You can review everything before anything is added.",
+    "houseGone": "This receipt was for a home you no longer belong to.",
+    "startOver": "Scan another receipt",
+    "house": "Home",
+    "store": "Shop",
+    "reviewHint": "Check each line: tap it to change the product, quantity, place, brand or date. Unticked lines are not added.",
+    "chain_one": "Scan dates in a row ({{count}})",
+    "chain_other": "Scan dates in a row ({{count}})",
+    "addLine": "Add line",
+    "discard": "Discard receipt",
+    "discardTitle": "Discard the receipt?",
+    "discardBody": "What was read will be lost and nothing will be added.",
+    "fixProblems_one": "{{count}} line needs checking.",
+    "fixProblems_other": "{{count}} lines need checking.",
+    "apply_one": "Add {{count}} product",
+    "apply_other": "Add {{count}} products",
+    "include": "Add {{name}}",
+    "editLine": "Edit {{name}}",
+    "fromAlias": "Matched as on previous receipts",
+    "newProduct": "New product: it will be created when adding",
+    "existingProduct": "It will be added to this product",
+    "newProductHint": "This product will be created in the home.",
+    "pickProduct": "Choose product",
+    "line": "Receipt line",
+    "onReceipt": "On the receipt: “{{text}}”",
+    "split": "Split into two lots (for different dates)",
+    "removeLine": "Remove line",
+    "done": "Done",
+    "problems": {
+      "quantity": "The quantity is not valid.",
+      "dateType": "Say whether it's a use-by or a best-before date.",
+      "name": "The product name is missing.",
+      "content": "How much each container holds is missing."
+    }
+  },
   "form": {
     "category": "Category",
     "quantityKind": "How it's counted",
@@ -350,6 +462,7 @@
     "noDate": "No printed date",
     "expiresOn": "Use by {{date}}",
     "bestBeforeOn": "Best before {{date}}",
+    "barcode": "Barcode {{code}}",
     "addReminder": "Set a reminder date",
     "editReminder": "Change dates",
     "fractions": {
@@ -367,7 +480,9 @@
       "freeze": "Freeze",
       "thaw": "Thaw",
       "discard": "Throw away",
-      "edit": "Edit"
+      "edit": "Edit",
+      "assignBarcode": "Assign barcode",
+      "changeBarcode": "Change barcode"
     },
     "brandTitle": "Preferred brand",
     "preferredBrand": "Preferred brand",
@@ -462,6 +577,10 @@
       "discarded_one": "Threw away {{qty}} of {{name}}",
       "discarded_other": "Threw away {{qty}} of {{name}}",
       "cooked": "Saved leftovers #{{number}}: {{name}} ({{qty}})",
+      "ticket_one": "A receipt with {{count}} product was added",
+      "ticket_other": "A receipt with {{count}} products was added",
+      "ticketFrom_one": "A {{store}} receipt with {{count}} product was added",
+      "ticketFrom_other": "A {{store}} receipt with {{count}} products was added",
       "other": "Change to {{name}}"
     }
   },
@@ -478,7 +597,8 @@
     "frozen": "Frozen",
     "thawed": "Thawed",
     "discarded": "Thrown away",
-    "edited": "Saved"
+    "edited": "Saved",
+    "ticket": "Receipt added"
   },
   "errors": {
     "not_member": "You don't belong to this home.",
@@ -498,7 +618,14 @@
     "product_name_taken": "There's already another product with that name.",
     "product_has_stock": "There's still some of this product left.",
     "network": "Can't reach the server. Check your internet connection and try again.",
-    "unknown": "Something went wrong. Try again in a moment."
+    "unknown": "Something went wrong. Try again in a moment.",
+    "ai_not_configured": "AI reading is not set up yet.",
+    "ai_no_credit": "The AI reading credit has run out. Let whoever runs the app know; meanwhile, add things by hand.",
+    "ai_quota": "You've reached today's limit of AI readings. You can carry on tomorrow; meanwhile, add things by hand.",
+    "ai_unavailable": "The reading service is not responding right now. Try again in a moment.",
+    "ai_unreadable": "The photo couldn't be read. Try a sharper one with good light.",
+    "image_too_large": "The photo is too large. Try another one.",
+    "image_unreadable": "The photo couldn't be opened. Try another one."
   },
   "auth": {
     "fields": {

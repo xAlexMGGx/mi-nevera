@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { PrintedDateFields } from '../../components/PrintedDateFields'
+import { DateEntry } from '../../components/DateEntry'
 import { ShelfLifeChip } from '../../components/ShelfLifeChip'
 import { Sheet } from '../../components/Sheet'
 import { Button, Message, Segmented, SelectField, Stepper, TextField } from '../../components/ui'
@@ -294,7 +294,7 @@ export function DiscardSheet({ product, lot, units, initialAmount, onClose }: Di
   )
 }
 
-export function EditLotSheet({ product, lot, onClose }: { product: Product; lot: Lot; onClose: () => void }) {
+export function EditLotSheet({ product, name, lot, onClose }: { product: Product; name: string; lot: Lot; onClose: () => void }) {
   const { t } = useTranslation()
   const { run, pending, errorKey } = useInventoryAction({ inlineErrors: true })
   const isDish = product.kind === 'cooked_dish'
@@ -351,7 +351,15 @@ export function EditLotSheet({ product, lot, onClose }: { product: Product; lot:
           </>
         ) : (
           <>
-            <PrintedDateFields date={printedDate} type={dateType} onDateChange={setPrintedDate} onTypeChange={setDateType} />
+            <DateEntry
+              name={name}
+              date={printedDate}
+              type={dateType}
+              onChange={(date, type) => {
+                setPrintedDate(date)
+                setDateType(type)
+              }}
+            />
             <TextField label={t('form.brand')} autoComplete="off" value={brand} onChange={(event) => setBrand(event.target.value)} />
             <TextField label={t('form.purchasedAt')} type="date" value={purchasedAt} onChange={(event) => setPurchasedAt(event.target.value)} />
           </>

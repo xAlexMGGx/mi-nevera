@@ -18,6 +18,7 @@ Calcula unos 30 minutos. Ya tienes instalados Node y Git, así que no necesitas 
 10. Cerrar el registro (más adelante)
 11. Enviar los correos con tu Gmail
 12. Activar las notificaciones
+13. Activar la lectura con IA (tickets y fechas)
 
 Tu app quedará publicada en **https://xalexmggx.github.io/mi-nevera/**.
 
@@ -320,6 +321,61 @@ La tarea se creó con las migraciones, pero necesita la dirección de tu proyect
 
 ---
 
+## 13. Activar la lectura con IA (tickets y fechas)
+
+Leer un ticket o la fecha de un envase lo hace Claude, el modelo de IA de Anthropic, desde dos funciones de Supabase (`parse-receipt` y `read-date`). La clave de Anthropic solo se guarda en Supabase: ni en el proyecto ni en el móvil. Calcula unos 10 minutos.
+
+**Antes de empezar:**
+
+- Cierra el registro (paso 10). Con el registro abierto, un desconocido podría gastar tu crédito.
+- Aplica la migración de la Fase 4: `npm run db:push` y después `npm run db:types`.
+
+**1. Crear la clave de Anthropic**
+
+1. Entra en <https://console.anthropic.com> y crea una cuenta.
+2. En **Billing**, añade crédito. Con 5 $ hay para empezar de sobra.
+3. Pon un límite de gasto mensual bajo (por ejemplo, 10 $) en la página de límites de la consola. Así un fallo nunca puede costarte más que eso.
+4. En **API Keys**, pulsa **Create Key** y llámala `Nevera digital`. Copia la clave (`sk-ant-...`): solo se muestra una vez. Pégala únicamente en el paso siguiente, nunca en el proyecto ni en un chat.
+
+**2. Guardar la clave en Supabase**
+
+Para que la clave no quede en el historial de PowerShell, va en un archivo temporal que Git ignora:
+
+1. En VS Code, crea el archivo `supabase/.env.anthropic` con estas dos líneas, pegando tu clave:
+
+   ```
+   ANTHROPIC_API_KEY=sk-ant-PEGA_AQUI_TU_CLAVE
+   ANTHROPIC_MODEL=claude-opus-5-5
+   ```
+
+2. Súbelo a los secretos de Supabase y borra el archivo:
+
+   ```powershell
+   npx supabase secrets set --env-file supabase/.env.anthropic
+   Remove-Item supabase/.env.anthropic
+   ```
+
+**Qué modelo usar:** `claude-opus-5-5` es el más capaz y el que recomiendo para tickets arrugados o con poca luz. Si prefieres gastar menos, `claude-sonnet-5-5` cuesta la mitad. Para cambiarlo, repite este paso con el otro nombre; no hace falta tocar el código.
+
+**3. Subir las funciones**
+
+```powershell
+npm run functions:deploy
+```
+
+Sube las cuatro funciones: las dos de notificaciones y las dos de lectura.
+
+**Compruébalo**
+
+1. En la app, pulsa **＋ → Escanear ticket**, haz una foto de un ticket y pulsa **Leer ticket**. En unos segundos aparece la lista para revisar.
+2. Dentro de un producto, en **Editar** de un lote, prueba **Leer fecha con la cámara**.
+
+**Lo que cuesta:** se paga por uso. Como orientación, con `claude-opus-5-5` un ticket cuesta unos céntimos y una fecha, alrededor de un céntimo; lo exacto lo ves en la consola de Anthropic, en **Usage**. Para evitar sorpresas, la app permite a cada persona 20 tickets y 150 fechas al día.
+
+**Privacidad:** la foto se envía a Anthropic solo para leerla y no se guarda en ningún sitio. Los códigos de barras se consultan en Open Food Facts, una base de datos pública y gratuita, sin enviar nada tuyo.
+
+---
+
 ## Trabajo habitual
 
 **Cuando una fase incluye migraciones nuevas**, aplícalas antes de publicar el código:
@@ -348,6 +404,8 @@ npm run functions:deploy
 | Clave `sb_secret_` | **Sí** | Solo en el Vault de Supabase (paso 12) |
 | Clave pública de notificaciones (`VITE_VAPID_PUBLIC_KEY`) | No | `.env.local` y Variables de GitHub (paso 12) |
 | Claves secretas de notificaciones (`supabase/.env.functions`) | **Sí** | Solo en los secretos de Supabase (paso 12). Git ignora el archivo |
+| Clave de Anthropic (`sk-ant-`) | **Sí** | Solo en los secretos de Supabase (paso 13) |
+| Nombre del modelo (`ANTHROPIC_MODEL`) | No | En los secretos de Supabase, junto a la clave (paso 13) |
 
 ## Si algo falla
 
@@ -364,4 +422,9 @@ npm run functions:deploy
 | La app dice "Las notificaciones aún no están configuradas" | Falta `VITE_VAPID_PUBLIC_KEY` en las Variables de GitHub (paso 12). Créala y vuelve a publicar. |
 | La notificación de prueba no llega | Abre la app desde el icono, no desde Safari. En los Ajustes del iPhone, comprueba **Notificaciones → Nevera** y que no haya un modo Concentración activo. Comprueba también que `npx supabase secrets list` muestra `VAPID_KEYS` y `VAPID_SUBJECT`. |
 | La prueba llega, pero el aviso diario no | Mira `cron.job_run_details` (paso 12). Si dice que falta la URL, revisa los nombres `project_url` y `secret_key` del Vault. Recuerda que solo llega si hay algo caducado o a punto de caducar. En Supabase, **Edge Functions → daily-digest → Logs** cuenta qué ha enviado. |
+| Al leer un ticket: "La lectura con IA todavía no está configurada" | Comprueba que `npx supabase secrets list` muestra `ANTHROPIC_API_KEY` y `ANTHROPIC_MODEL` (paso 13). Si están, el nombre del modelo está mal escrito o la clave se ha borrado en Anthropic: crea otra y repite el paso 13. En Supabase, **Edge Functions → parse-receipt → Logs** dice cuál de las dos. |
+| "Se ha acabado el crédito de la lectura con IA" | Añade crédito en **Billing** de la consola de Anthropic. |
+| "El servicio de lectura no responde ahora mismo" | Anthropic está saturado o ha alcanzado tu límite de gasto mensual. Prueba más tarde o revisa los límites en la consola. |
+| La lectura no encuentra productos o se equivoca mucho | Haz la foto con el ticket plano, entero y con buena luz. Si es muy largo, usa **Añadir otra parte** para fotografiarlo en dos o tres trozos. Todo se puede corregir en la vista previa antes de añadir. |
+| La cámara no se abre dentro de la app | Acepta el permiso de cámara cuando lo pida. Si lo rechazaste, actívalo en los Ajustes del iPhone (**Apps → Safari → Cámara**). Mientras tanto, el botón **Hacer foto** abre la cámara del sistema. |
 | La app deja de responder tras días sin usarla | El plan gratuito pausa el proyecto tras una semana con poca actividad. Entra en Supabase y restáuralo: no se pierde ningún dato. |

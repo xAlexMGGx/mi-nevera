@@ -663,6 +663,51 @@ export type Database = {
           },
         ]
       }
+      ticket_aliases: {
+        Row: {
+          brand: string | null
+          created_at: string
+          house_id: string
+          id: string
+          product_id: string
+          raw_text_normalized: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          house_id: string
+          id?: string
+          product_id: string
+          raw_text_normalized: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          house_id?: string
+          id?: string
+          product_id?: string
+          raw_text_normalized?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_aliases_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_aliases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           created_at: string
@@ -805,6 +850,7 @@ export type Database = {
       }
       add_lot: {
         Args: {
+          p_barcode?: string
           p_brand?: string
           p_bulk_unit?: Database["public"]["Enums"]["amount_unit"]
           p_catalog_item_id?: string
@@ -813,6 +859,7 @@ export type Database = {
           p_content_unit?: Database["public"]["Enums"]["amount_unit"]
           p_frozen_at?: string
           p_house_id: string
+          p_image_url?: string
           p_name?: string
           p_printed_date?: string
           p_printed_date_type?: Database["public"]["Enums"]["printed_date_type"]
@@ -831,6 +878,16 @@ export type Database = {
         Args: { p_lot_id: string; p_new_quantity: number }
         Returns: string
       }
+      apply_ticket: {
+        Args: {
+          p_house_id: string
+          p_lines: Json
+          p_purchased_at?: string
+          p_store?: string
+        }
+        Returns: string
+      }
+      claim_ai_use: { Args: { p_kind: string }; Returns: boolean }
       claim_digest: {
         Args: { p_day: string; p_house_id: string; p_user_id: string }
         Returns: boolean
@@ -877,6 +934,14 @@ export type Database = {
           joined_at: string
           role: Database["public"]["Enums"]["member_role"]
           user_id: string
+        }[]
+      }
+      match_ticket_lines: {
+        Args: { p_house_id: string; p_raw_texts: string[] }
+        Returns: {
+          brand: string
+          product_id: string
+          raw_text: string
         }[]
       }
       move_lot: {

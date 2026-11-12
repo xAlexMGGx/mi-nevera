@@ -7,27 +7,35 @@ import { errorKey } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 import { useActiveHouseId } from './house'
 
-export function useInventory() {
-  const houseId = useActiveHouseId()
+export async function fetchInventory(houseId: string): Promise<InventoryData> {
+  const [zones, products, lots, units] = await Promise.all([
+    supabase.from('zones').select('*').eq('house_id', houseId).order('sort_order'),
+    supabase.from('products').select('*').eq('house_id', houseId),
+    supabase.from('lots_with_dates').select('*').eq('house_id', houseId),
+    supabase.from('opened_units_with_dates').select('*').eq('house_id', houseId),
+  ])
+  const error = zones.error ?? products.error ?? lots.error ?? units.error
+  if (error) throw error
+  return {
+    zones: zones.data ?? [],
+    products: products.data ?? [],
+    // Las vistas se generan con todas las columnas opcionales, pero son las de sus tablas.
+    lots: (lots.data ?? []) as unknown as Lot[],
+    units: (units.data ?? []) as unknown as OpenedUnit[],
+  }
+}
+
+export function inventoryKey(houseId: string) {
+  return ['inventory', houseId] as const
+}
+
+/** El inventario de la casa activa o, por ejemplo para aplicar un ticket en otra, el de esa casa. */
+export function useInventory(otherHouseId?: string) {
+  const activeHouseId = useActiveHouseId()
+  const houseId = otherHouseId ?? activeHouseId
   return useQuery({
-    queryKey: ['inventory', houseId],
-    queryFn: async (): Promise<InventoryData> => {
-      const [zones, products, lots, units] = await Promise.all([
-        supabase.from('zones').select('*').eq('house_id', houseId).order('sort_order'),
-        supabase.from('products').select('*').eq('house_id', houseId),
-        supabase.from('lots_with_dates').select('*').eq('house_id', houseId),
-        supabase.from('opened_units_with_dates').select('*').eq('house_id', houseId),
-      ])
-      const error = zones.error ?? products.error ?? lots.error ?? units.error
-      if (error) throw error
-      return {
-        zones: zones.data ?? [],
-        products: products.data ?? [],
-        // Las vistas se generan con todas las columnas opcionales, pero son las de sus tablas.
-        lots: (lots.data ?? []) as unknown as Lot[],
-        units: (units.data ?? []) as unknown as OpenedUnit[],
-      }
-    },
+    queryKey: inventoryKey(houseId),
+    queryFn: () => fetchInventory(houseId),
   })
 }
 
@@ -43,6 +51,7 @@ export type ToastKey =
   | 'thawed'
   | 'discarded'
   | 'edited'
+  | 'ticket'
 
 type Rpc = () => PromiseLike<{ data: unknown; error: unknown }>
 
@@ -67,6 +76,8 @@ export function useInventoryAction({ inlineErrors = false }: ActionOptions = {})
     onSuccess: async (movementId, { toast }) => {
       await queryClient.invalidateQueries({ queryKey: ['inventory'] })
       await queryClient.invalidateQueries({ queryKey: ['movements'] })
+      // Al añadir con fecha, la casa aprende cuánto suele durar (SPEC §7.4).
+      void queryClient.invalidateQueries({ queryKey: ['dateSamples'] })
       if (typeof movementId === 'string') showUndo(t(`toast.${toast}`), movementId)
     },
     onError: (error) => {

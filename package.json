@@ -19,13 +19,15 @@
     "db:types": "supabase gen types --lang=typescript --remote --schema public > src/lib/database.types.ts",
     "shelf-life:migration": "node scripts/buildShelfLifeMigration.ts",
     "push:keys": "node scripts/generateVapidKeys.ts",
-    "functions:deploy": "supabase functions deploy daily-digest send-test-push --use-api"
+    "functions:deploy": "supabase functions deploy daily-digest send-test-push parse-receipt read-date --use-api"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/query-async-storage-persister": "^5.107.1",
     "@tanstack/react-query": "^5.107.1",
     "@tanstack/react-query-persist-client": "^5.107.1",
+    "@zxing/browser": "0.2.1",
+    "@zxing/library": "0.23.0",
     "fuse.js": "^7.5.0",
     "i18next": "^27.0.1",
     "i18next-browser-languagedetector": "^8.3.0",
@@ -56,6 +58,7 @@
     "vite": "^8.3.7",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.1.0",
-    "workbox-build": "^7.4.1"
+    "workbox-build": "^7.4.1",
+    "zod": "4.6.7"
   }
 }

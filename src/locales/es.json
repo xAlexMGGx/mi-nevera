@@ -302,6 +302,118 @@
     "create": "Crear «{{name}}»",
     "leftover": "Añadir un táper o resto"
   },
+  "addMenu": {
+    "title": "Añadir",
+    "manual": "Añadir manualmente",
+    "barcode": "Escanear código de barras",
+    "ticket": "Escanear ticket"
+  },
+  "barcode": {
+    "title": "Código de barras",
+    "hint": "Encuadra el código dentro del recuadro.",
+    "manualLabel": "Código de barras",
+    "manualPlaceholder": "O escribe el número",
+    "search": "Buscar",
+    "invalid": "Escribe solo las cifras del código (de 6 a 14).",
+    "lookingUp": "Buscando {{code}}…",
+    "notFound": "Este producto no está en Open Food Facts.",
+    "notFoundShort": "Producto sin datos",
+    "offline": "No se ha podido consultar Open Food Facts.",
+    "fillByHand": "Puedes rellenar los datos a mano: el código se guardará igualmente.",
+    "code": "Código {{code}}",
+    "use": "Usar este producto",
+    "useCode": "Seguir con el código",
+    "again": "Escanear otro",
+    "source": "Datos de Open Food Facts",
+    "scan": "Escanear código de barras",
+    "scanToFill": "Escanear código de barras",
+    "pickProduct": "Elige el producto entre los de tu casa o del catálogo, o créalo con su nombre.",
+    "remove": "Quitar el código"
+  },
+  "camera": {
+    "starting": "Abriendo la cámara…",
+    "denied": "No hay permiso para usar la cámara. Puedes darlo en los ajustes del móvil o hacer la foto con la cámara del sistema.",
+    "unavailable": "No se puede abrir la cámara aquí. Puedes hacer la foto con la cámara del sistema.",
+    "retry": "Volver a intentarlo"
+  },
+  "readDate": {
+    "open": "Leer fecha con la cámara",
+    "title": "Leer fecha",
+    "chainTitle": "Fechas en cadena",
+    "chainNow": "Ahora: {{name}} · {{current}} de {{total}}",
+    "hint": "Acerca la cámara a la fecha impresa en el envase.",
+    "shoot": "Hacer foto",
+    "reading": "Leyendo la fecha…",
+    "skip": "Saltar",
+    "retake": "Repetir foto",
+    "notFound": "No se ha encontrado una fecha. Escríbela o repite la foto.",
+    "lowConfidence": "Revisa la fecha: no se lee con claridad.",
+    "monthOnly": "El envase solo trae mes y año: se usa el último día del mes.",
+    "yearAssumed": "El envase no trae año: se ha supuesto {{year}}.",
+    "recognized": "Texto leído: «{{text}}»",
+    "chooseType": "Indica si es de caducidad o de consumo preferente.",
+    "confirm": "Confirmar",
+    "confirmNext": "Confirmar y seguir",
+    "correct": "Corregir"
+  },
+  "learned": {
+    "chip": "¿{{date}}? (como sueles)",
+    "hint": {
+      "expiry_one": "Caducidad, según {{count}} compra.",
+      "expiry_other": "Caducidad, según tus últimas {{count}} compras.",
+      "best_before_one": "Consumo preferente, según {{count}} compra.",
+      "best_before_other": "Consumo preferente, según tus últimas {{count}} compras."
+    },
+    "tap": "Tócalo para ponerla.",
+    "selected": "Tócalo otra vez para quitarla."
+  },
+  "ticket": {
+    "title": "Escanear ticket",
+    "photoHint": "Haz una foto del ticket entero, plano y con buena luz. Si es muy largo, hazla en varias partes (hasta 3), de arriba abajo.",
+    "takePhoto": "Hacer foto del ticket",
+    "fromGallery": "Elegir de la galería",
+    "part": "Parte {{number}}",
+    "removePart": "Quitar la parte {{number}}",
+    "addPart": "Añadir otra parte",
+    "read": "Leer ticket",
+    "reading": "Leyendo el ticket… Puede tardar medio minuto.",
+    "nothingFound": "No se han encontrado productos en la foto.",
+    "addByHand": "Añadir a mano",
+    "privacy": "La foto se envía a Claude (Anthropic) solo para leerla y no se guarda. Antes de añadir nada podrás revisarlo todo.",
+    "houseGone": "Este ticket era para una casa a la que ya no perteneces.",
+    "startOver": "Escanear otro ticket",
+    "house": "Casa",
+    "store": "Tienda",
+    "reviewHint": "Revisa cada línea: tócala para cambiar el producto, la cantidad, la zona, la marca o la fecha. Lo desmarcado no se añade.",
+    "chain_one": "Escanear fechas en cadena ({{count}})",
+    "chain_other": "Escanear fechas en cadena ({{count}})",
+    "addLine": "Añadir línea",
+    "discard": "Descartar ticket",
+    "discardTitle": "¿Descartar el ticket?",
+    "discardBody": "Se perderá lo leído y no se añadirá nada.",
+    "fixProblems_one": "Hay {{count}} línea por revisar.",
+    "fixProblems_other": "Hay {{count}} líneas por revisar.",
+    "apply_one": "Añadir {{count}} producto",
+    "apply_other": "Añadir {{count}} productos",
+    "include": "Añadir {{name}}",
+    "editLine": "Editar {{name}}",
+    "fromAlias": "Emparejado como en tickets anteriores",
+    "newProduct": "Producto nuevo: se creará al añadir",
+    "existingProduct": "Se añadirá a este producto",
+    "newProductHint": "Este producto se creará en la casa.",
+    "pickProduct": "Elegir producto",
+    "line": "Línea del ticket",
+    "onReceipt": "En el ticket: «{{text}}»",
+    "split": "Dividir en dos lotes (para fechas distintas)",
+    "removeLine": "Quitar línea",
+    "done": "Hecho",
+    "problems": {
+      "quantity": "La cantidad no es válida.",
+      "dateType": "Falta indicar si es de caducidad o de consumo preferente.",
+      "name": "Falta el nombre del producto.",
+      "content": "Falta cuánto contiene cada envase."
+    }
+  },
   "form": {
     "category": "Categoría",
     "quantityKind": "Cómo se cuenta",
@@ -350,6 +462,7 @@
     "noDate": "Sin fecha impresa",
     "expiresOn": "Caduca el {{date}}",
     "bestBeforeOn": "Consumo preferente: {{date}}",
+    "barcode": "Código {{code}}",
     "addReminder": "Poner fecha de aviso",
     "editReminder": "Cambiar fechas",
     "fractions": {
@@ -367,7 +480,9 @@
       "freeze": "Congelar",
       "thaw": "Descongelar",
       "discard": "Tirar",
-      "edit": "Editar"
+      "edit": "Editar",
+      "assignBarcode": "Asignar código",
+      "changeBarcode": "Cambiar código"
     },
     "brandTitle": "Marca preferida",
     "preferredBrand": "Marca preferida",
@@ -462,6 +577,10 @@
       "discarded_one": "Se tiró {{qty}} de {{name}}",
       "discarded_other": "Se tiraron {{qty}} de {{name}}",
       "cooked": "Se guardó el táper #{{number}}: {{name}} ({{qty}})",
+      "ticket_one": "Se añadió un ticket con {{count}} producto",
+      "ticket_other": "Se añadió un ticket con {{count}} productos",
+      "ticketFrom_one": "Se añadió un ticket de {{store}} con {{count}} producto",
+      "ticketFrom_other": "Se añadió un ticket de {{store}} con {{count}} productos",
       "other": "Cambio en {{name}}"
     }
   },
@@ -478,7 +597,8 @@
     "frozen": "Congelado",
     "thawed": "Descongelado",
     "discarded": "Tirado",
-    "edited": "Guardado"
+    "edited": "Guardado",
+    "ticket": "Ticket añadido"
   },
   "errors": {
     "not_member": "No perteneces a esta casa.",
@@ -498,7 +618,14 @@
     "product_name_taken": "Ya hay otro producto con ese nombre.",
     "product_has_stock": "Todavía quedan existencias de este producto.",
     "network": "No hay conexión con el servidor. Comprueba tu internet y vuelve a probar.",
-    "unknown": "Algo ha fallado. Vuelve a probar en un momento."
+    "unknown": "Algo ha fallado. Vuelve a probar en un momento.",
+    "ai_not_configured": "La lectura con IA todavía no está configurada.",
+    "ai_no_credit": "Se ha acabado el crédito de la lectura con IA. Avisa a quien administra la app; mientras, puedes añadir a mano.",
+    "ai_quota": "Has llegado al límite de lecturas con IA de hoy. Mañana podrás seguir; mientras, puedes añadir a mano.",
+    "ai_unavailable": "El servicio de lectura no responde ahora mismo. Vuelve a probar en un momento.",
+    "ai_unreadable": "No se ha podido leer la foto. Prueba con otra más nítida y con buena luz.",
+    "image_too_large": "La foto es demasiado grande. Prueba con otra.",
+    "image_unreadable": "No se ha podido abrir la foto. Prueba con otra."
   },
   "auth": {
     "fields": {

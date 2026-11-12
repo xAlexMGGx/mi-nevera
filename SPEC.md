@@ -132,6 +132,7 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 - **`push_subscriptions`** (fase 3): `user_id`, `endpoint`, `p256dh`, `auth`, `user_agent`. Una por móvil. Si en el móvil entra otra cuenta, la suscripción pasa a ella.
 - **`shelf_life_guide`** (fase 3): `catalog_item_id` o `category`, `state` (`opened`|`frozen`|`thawed`|`cooked`|`closed_fridge`|`closed_pantry`), `min_days`, `max_days`, `note_es`, `note_en`, `source`. Sin días, la fuente desaconseja ese estado (por ejemplo, congelar huevos con cáscara). Se genera a partir de `src/content/conservation/shelf-life.json`.
 - **`private.digest_log`** (fase 3): `user_id`, `house_id`, `day`. Lo ya avisado, para no repetir el aviso diario.
+- **`private.ai_usage`** (fase 4): `user_id`, `day`, `kind` (`receipt`|`date`), `count`. Lecturas con IA de cada persona y día, para el límite diario (20 tickets y 150 fechas).
 - **`shopping_items`** (fase 6): `house_id`, `product_id` (nullable), `name`, `quantity_text`, `preferred_brand`, `checked`, `origin` (`manual`|`finished`|`recipe`).
 - **`recipe_favorites`** (fase 7): `user_id`, `house_id`, `title`, `recipe jsonb`.
 - **`recipe_blocked`** (fase 7): `user_id`, `title_normalized`.
@@ -150,18 +151,20 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | Función | Qué hace |
 |---|---|
 | `create_house(name)` | Crea la casa con sus 3 zonas, hace propietario a quien la crea y la deja activa. No registra movimiento |
-| `add_lot(...)` | Crea lote (y producto si no existe) + `date_samples` |
+| `add_lot(...)` | Crea lote (y producto si no existe) + `date_samples`. Desde la fase 4, también con código de barras y foto |
 | `add_cooked_dish(...)` | Crea un táper: producto propio, lote y número de recipiente. Registra `cooked` |
 | `consume(product_id \| lot_id, amount, zone_id?, all?)` | Resta aplicando FEFO; para `divisible`, primero termina unidades abiertas, después abre/cuenta cerradas según la acción. Con `zone_id` se limita a esa zona. Si piden más de lo que queda, consume lo que hay |
 | `open_unit(lot_id \| product_id, reminder_date?)` | Pasa una unidad cerrada a abierta (100 %). En `count` separa la unidad en un lote propio; en `bulk` marca el lote entero |
 | `set_remaining(opened_unit_id, fraction)` | Ajusta lo que queda; si llega a 0, la elimina (`finished`) |
 | `update_opened_unit(opened_unit_id, ...)` | Edita las fechas de una unidad abierta. Registra `adjusted` |
 | `adjust_quantity(lot_id, new_quantity)` | Corrección manual (único caso en que se envía un valor final; registra `adjusted`) |
-| `update_lot(lot_id, ...)` | Edita los datos del lote: fechas (incluidas `frozen_at`, `thawed_at` y `reminder_date`), tipo de fecha, marca y número de recipiente. Registra `adjusted` |
+| `update_lot(lot_id, ...)` | Edita los datos del lote: fechas (incluidas `frozen_at`, `thawed_at` y `reminder_date`), tipo de fecha, marca, número de recipiente, código de barras y foto. Registra `adjusted` |
 | `move_lot(lot_id, quantity, target_zone_id, opened_unit_ids?, reminder_date?)` | Mueve entre zonas o casas. Si se mueve parte, divide el lote conservando fechas y marca. Mover al Congelador es congelar (`frozen`, fija `frozen_at`) y sacarlo es descongelar (`thawed`, fija `thawed_at`). Entre casas, empareja el producto destino por `catalog_item_id` o nombre normalizado; si no existe, lo crea (ver §7.5) |
 | `discard(lot_id, quantity, opened_unit_ids?)` | Tirar (distinto de consumir) |
 | `update_product(product_id, ...)` / `delete_product(product_id)` | Editan nombre, categoría, marca preferida y notas, o borran un producto sin existencias. No cambian el inventario, así que no registran movimiento |
-| `apply_ticket(payload)` | Aplica las líneas confirmadas de la preview y guarda alias |
+| `apply_ticket(house_id, lines, purchased_at?, store?)` | Aplica las líneas confirmadas de la preview y guarda alias. Todas en una sola operación, con un único movimiento `ticket_applied` que se deshace entero (alias incluidos) |
+| `match_ticket_lines(house_id, raw_texts)` | Las líneas de ticket que la casa ya conoce por sus alias. La usa `parse-receipt`. No registra movimiento |
+| `claim_ai_use(kind)` | Cuenta una lectura con IA de quien llama y dice si cabe en su límite del día. La usan `parse-receipt` y `read-date` |
 | `cook_recipe(payload)` | Aplica los descuentos confirmados y, opcionalmente, crea táper |
 | `undo_movement(movement_id)` | Restaura el estado previo guardado en `undo_state`. Solo movimientos de los últimos 2 minutos. Se rechaza si un movimiento posterior tocó los mismos lotes, para no pisar el cambio de otra persona. Si se deshace, el movimiento desaparece del historial. Un movimiento entre casas se deshace desde su salida (`moved_out`), que deshace también la entrada |
 | `create_invite(house_id)` / `revoke_invite(invite_id)` | Crean o anulan una invitación. Solo el propietario. No registran movimiento |
@@ -281,6 +284,8 @@ Al abrir, congelar, descongelar o crear un táper, se muestra un chip según `sh
 - Para un producto con **≥ 3** `date_samples` del mismo tipo, sugerir `hoy + mediana(días)` como chip: "¿20 nov? (como sueles)".
 - Aparece en el alta manual y en la preview del ticket. Nunca rellena el campo.
 - Estadística simple, sin LLM.
+- "Hoy" es el día de compra (hoy, salvo que se cambie o que el ticket traiga otra fecha), porque las muestras cuentan los días desde la compra.
+- Cuentan las 10 compras más recientes de cada tipo. Con un número par, la mediana se redondea hacia abajo (la fecha más temprana). Si los dos tipos tienen bastantes muestras, se usa el más frecuente y, a igualdad, caducidad. Un toque pone fecha y tipo; otro, los quita.
 
 ### 7.5 Movimiento entre casas
 
@@ -367,6 +372,14 @@ Sección informativa dentro de Ajustes (y enlazada desde los chips y desde la pa
 
 **Errores:** si la lectura falla o devuelve JSON inválido, mostrar mensaje claro y permitir reintentar o pasar a alta manual. Controlar tamaño máximo de imagen.
 
+**Cómo quedó (fase 4):**
+- Un ticket largo se puede fotografiar en hasta 3 partes, que se leen juntas. Cada foto, como máximo 4 MB.
+- El modelo recibe también el catálogo base, para que lo nuevo llegue con su icono, categoría y forma de contar. Los productos de la casa van con referencias cortas (`p1`, `p2`…) en lugar de su `uuid`, y la función las traduce; una referencia o un producto del catálogo que no existen se descartan.
+- Además de lo de arriba, cada línea trae `catalog_item_id`, `category` y `from_alias`. Una línea que coincide con un alias de la casa (sin mayúsculas, tildes ni puntuación) se empareja con ese producto aunque el modelo diga otra cosa.
+- Formato estructurado de la API (`output_config.format`) y validación con Zod en la función. Cantidades, textos y fechas se limitan después: la fecha de compra solo vale si es de este último año y no futura.
+- La foto no se guarda. El borrador de la preview se guarda en el móvil hasta aplicarlo o descartarlo, por si la app se recarga al volver de la cámara.
+- Si se cambia la casa destino en la preview, cada línea busca el mismo producto en la otra casa (por catálogo o nombre) y, si no lo tiene, se creará allí con la misma forma de contar.
+
 ### 10.2 Leer fecha con la cámara
 
 - Foto (o recorte) de la zona del envase donde está impresa la fecha.
@@ -375,6 +388,8 @@ Sección informativa dentro de Ajustes (y enlazada desde los chips y desde la pa
   - Fechas incompletas (solo mes/año, habitual en conservas): usar el último día del mes e indicarlo.
 - **Siempre se confirma antes de guardar:** se muestra la fecha leída en grande, con el texto reconocido debajo, y botones *Confirmar* · *Corregir* · *Repetir foto*. Si `confidence = low`, se resalta.
 - Disponible en: alta manual, edición de lote y preview del ticket.
+- El modelo devuelve año, mes y día por separado y la función compone la fecha: así "solo mes y año" siempre es el último día del mes. La respuesta añade `month_only` y `year_assumed`: si el envase no trae año, se supone el próximo en que cae ese día (o este, si fue hace menos de una semana) y la confianza pasa a `low`.
+- La cámara se abre dentro de la app y sigue abierta entre productos en el escaneo en cadena. Si no hay permiso, se usa la cámara del sistema.
 
 ### 10.3 Escaneo de fechas en cadena
 
@@ -394,6 +409,9 @@ Para completar las fechas de un ticket sin ir línea a línea a mano:
 - Si no hay resultado: permitir rellenar a mano y guardar igualmente el código en el lote.
 - Guardar `barcode` e `image_url` en el lote.
 - Disponible desde: alta manual, preview del ticket y detalle de lote ("Asignar código").
+- Open Food Facts se consulta desde el móvil (API v2, solo los campos necesarios), identificándose con la cabecera `X-User-Agent`, porque el navegador no deja cambiar el `User-Agent`. Así su límite de lecturas por minuto es el de cada persona y no el compartido de los servidores de Supabase.
+- Si la casa ya tiene un lote con ese código, se elige ese producto directamente. Si no, se busca por el nombre de Open Food Facts; un producto nuevo empieza con su marca y el contenido del envase ("400 g").
+- Solo EAN-13, EAN-8, UPC-A y UPC-E. El código también se puede escribir a mano.
 
 ---
 
@@ -552,11 +570,25 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 3 · Avisos y conservación. Código terminado, pendiente de aplicar las migraciones, activar las notificaciones (`SETUP.md`, paso 12), desplegar, confirmar en el iPhone y revisar el contenido de conservación.
+**Fase actual:** 4 · Ticket y código de barras. Código terminado, pendiente de aplicar la migración, activar la lectura con IA (`SETUP.md`, paso 13), desplegar y confirmar en el iPhone con un ticket real.
 
 ### Hecho
 
-**Fase 3 · Avisos y conservación**
+**Fase 4 · Ticket y código de barras**
+
+- ＋ abre un menú: Añadir manualmente · Escanear código de barras · Escanear ticket.
+- Escanear ticket: foto con la cámara o de la galería (hasta 3 partes si es largo), reducida en el móvil a 1600 px. Edge Function `parse-receipt` con Claude, respuesta validada con Zod y emparejada con los productos, el catálogo y los alias de la casa.
+- Vista previa editable: casa destino, tienda y fecha de compra; por línea, casilla (lo que no es comida llega desmarcado), producto cambiable, cantidad, zona, marca, fecha con chip aprendido, leer fecha y código de barras; dividir en dos lotes, quitar y añadir líneas. Se aplica con `apply_ticket` en una sola operación, con Deshacer.
+- Alias de ticket: lo confirmado se recuerda y el siguiente ticket lo empareja solo.
+- Leer fecha con la cámara (Edge Function `read-date`) en el alta manual, la edición de lote y la vista previa, siempre con confirmación. Escaneo de fechas en cadena con "Ahora: … · 3 de 9", Confirmar pasa a la siguiente y Saltar la deja vacía.
+- Código de barras con `@zxing/browser` y Open Food Facts en el alta manual, la vista previa y "Asignar código" en cada lote. Sin resultado, el código se guarda igualmente.
+- Fechas aprendidas en el alta manual y la vista previa.
+- Límite de 20 tickets y 150 fechas por persona y día. Errores claros: sin configurar, sin crédito, servicio saturado, foto ilegible o demasiado grande.
+- El historial muestra "Se añadió un ticket de Mercadona con 9 productos" con la lista de productos. Mis datos incluye los alias.
+- Tests: `apply_ticket`, alias, Deshacer del ticket entero, código y foto en lotes, límite diario y permisos contra Postgres real; validación de las respuestas de la IA, fechas aprendidas, borrador del ticket y Open Food Facts. La petición a Claude se comprobó en Deno contra una API simulada (versión de API, formato estructurado y errores), y el recorrido completo en el navegador con el SQL real, una cámara simulada que muestra un EAN-13 y respuestas de Claude preparadas.
+- Corregido: al llegar a Añadir con un producto ya elegido (desde un producto agotado), "Cambiar" no dejaba elegir otro.
+
+**Fase 3 · Avisos y conservación (confirmada)**
 
 - Pantalla Avisos (pestaña de la barra inferior): Caducado, Revisar, Pronto y Abiertos, con −1 o Terminado, Tirar y Ver.
 - Notificación diaria: suscripción por móvil, Edge Function `daily-digest` cada hora con `pg_cron`, una por persona, casa y día, en su idioma y su zona horaria.
@@ -604,9 +636,9 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ### Pendiente
 
-- **Fase 3:** aplicar las migraciones, activar las notificaciones (`SETUP.md`, paso 12), publicar y comprobar la aceptación en el iPhone. Probado contra el SQL real con la API emulada, y el envío cifrado en Deno sin red; falta la entrega real del servicio de Apple.
+- **Fase 4:** aplicar la migración (`npm run db:push`), activar la lectura con IA (`SETUP.md`, paso 13), publicar y comprobar la aceptación en el iPhone con un ticket real. Falta probar con Claude de verdad: en las pruebas su respuesta estaba preparada de antemano.
 - **Revisión del propietario:** comprobar el contenido de conservación con sus fuentes (`src/content/conservation/SOURCES.md`) y poner `reviewed: true` en `review.json`. Faltan los lácteos abiertos, sin fuente accesible.
-- **Fase 4:** sin empezar, a la espera de confirmación del propietario.
+- **Fase 5:** sin empezar, a la espera de confirmación del propietario.
 
 ### Decisiones tomadas (2026-11-09)
 
@@ -651,3 +683,17 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **Notificación de prueba:** va solo al móvil desde el que se pide.
 - **Cerrar sesión:** el móvil deja de recibir las notificaciones de esa cuenta.
 - **Ajustes del perfil:** se ven cambiados al momento y, si el servidor los rechaza, vuelven atrás.
+
+**Fase 4**
+
+- **Modelo de IA:** `claude-opus-5-5` recomendado, en el secreto `ANTHROPIC_MODEL`; `claude-sonnet-5-5` cuesta la mitad. Se cambia sin tocar el código. SDK oficial `@anthropic-ai/sdk` 1.7.0, fijado (la 1.8.0 tenía menos de un día).
+- **Límite diario por persona:** 20 tickets y 150 fechas, para que un fallo que repitiera peticiones no dispare la factura. No estaba en el SPEC.
+- **Varias fotos por ticket:** hasta 3 partes, porque a 1600 px un ticket muy largo queda ilegible en una sola foto.
+- **Catálogo en la lectura:** el modelo empareja también con el catálogo base y propone la categoría, para que lo nuevo no llegue como "Otros".
+- **Alias:** mandan sobre el modelo. Deshacer un ticket devuelve los alias a como estaban, salvo que otro ticket posterior los haya cambiado.
+- **Un movimiento por ticket:** `ticket_applied` con la tienda y la lista de productos, en vez de uno por línea.
+- **Fecha aprendida:** se cuenta desde el día de compra, que en un ticket es el suyo. Detalles en §7.4.
+- **Open Food Facts desde el móvil**, con la cabecera `X-User-Agent`. Lo encontrado por código se reconoce por los lotes de la casa con ese código; no se añadió una tabla de códigos aparte.
+- **Fotos de Open Food Facts:** solo direcciones `https`, comprobado también en la base de datos. Si no cargan, no se muestran.
+- **Cámara:** dentro de la app (sigue abierta en el escaneo en cadena); si no hay permiso, la del sistema. El escáner solo se descarga al abrirlo.
+- **Borrador del ticket en el móvil:** sobrevive a recargar la app y no se paga otra lectura. Se borra al aplicar o descartar.

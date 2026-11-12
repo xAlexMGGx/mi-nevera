@@ -20,6 +20,7 @@ import { ProductPage } from './pages/ProductPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { TicketPage } from './pages/TicketPage'
 
 /** Enlace de invitación sin haber entrado: se recuerda para después de iniciar sesión. */
 function RememberInviteAndLogin() {
@@ -58,6 +59,7 @@ export function App() {
         <Route path="/conservation" element={<ConservationPage />} />
         <Route path="/add" element={<AddPage />} />
         <Route path="/add/leftover" element={<AddLeftoverPage />} />
+        <Route path="/ticket" element={<TicketPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/movements" element={<MovementsPage />} />
         <Route path="/settings" element={<SettingsPage />} />

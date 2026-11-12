@@ -1,18 +1,21 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useSearchParams } from 'react-router'
-import { ChevronIcon, SearchIcon, TrashIcon } from '../components/icons'
-import { PrintedDateFields } from '../components/PrintedDateFields'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { DateEntry } from '../components/DateEntry'
+import { ChevronIcon, CloseIcon } from '../components/icons'
+import { ProductPhoto } from '../components/ProductPhoto'
+import { ProductResults, SearchField, type Selection } from '../components/ProductSearch'
 import { Screen } from '../components/Screen'
 import { ShelfLifeChip } from '../components/ShelfLifeChip'
 import { Button, FullScreenLoader, LoadError, Message, SelectField, Stepper, TextField, focusRing } from '../components/ui'
 import { useCatalog } from '../data/catalog'
 import { useDateContext } from '../data/context'
+import { useDateSamples } from '../data/dateSamples'
 import { useActiveHouseId } from '../data/house'
 import { useInventory, useInventoryAction } from '../data/inventory'
 import { productIcon, productName, type CatalogById, type CatalogItem, type InventoryData, type Product } from '../domain/inventory'
-import { parseAmount, unitName } from '../domain/quantity'
-import { createSearch } from '../domain/search'
+import { learnedDate } from '../domain/learnedDates'
+import { formatForInput, parseAmount, unitName } from '../domain/quantity'
 import {
   bulkUnits,
   categories,
@@ -28,80 +31,63 @@ import {
   type QuantityKind,
   type ZoneKind,
 } from '../domain/types'
+import { useOffline } from '../lib/connectivity'
 import { supabase } from '../lib/supabase'
+import type { ScannedProduct } from '../scan/openFoodFacts'
+import { ScanBarcodeDialog } from '../scan/ScanBarcodeDialog'
 import { DeleteProductSheet } from './product/sheets'
 
-type Selection =
-  | { type: 'product'; product: Product }
-  | { type: 'catalog'; item: CatalogItem }
-  | { type: 'new'; name: string }
-
-interface PickerEntry {
-  key: string
-  name: string
-  icon: string
-  searchTerms: string[]
-  subtitle: string
-  selection: Selection
-  /** Producto de la casa sin existencias: se puede eliminar desde aquí. */
-  emptyProduct?: Product
+/** Llega así desde "＋ → Escanear código". */
+export interface AddPageState {
+  scanned?: ScannedProduct
 }
 
-function ProductPicker({ data, catalog, items, onPick }: { data: InventoryData; catalog: CatalogById; items: CatalogItem[]; onPick: (selection: Selection) => void }) {
+/** Si la casa ya tiene un lote con ese código, es ese producto. */
+function productWithBarcode(data: InventoryData, barcode: string): Product | undefined {
+  const lot = data.lots.find((row) => row.barcode === barcode)
+  return lot ? data.products.find((product) => product.id === lot.product_id) : undefined
+}
+
+function ScannedBanner({ scanned, onClear }: { scanned: ScannedProduct; onClear: () => void }) {
   const { t } = useTranslation()
-  const { language, tag } = useDateContext()
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-2.5">
+      <ProductPhoto src={scanned.imageUrl} className="size-12 rounded-lg" />
+      <div className="min-w-0 flex-1 text-sm">
+        <p className="truncate font-semibold">{scanned.name ?? t('barcode.notFoundShort')}</p>
+        <p className="truncate text-ink-muted">{[scanned.brand, scanned.quantityText, scanned.barcode].filter(Boolean).join(' · ')}</p>
+      </div>
+      <button type="button" aria-label={t('barcode.remove')} onClick={onClear} className={`flex size-10 shrink-0 items-center justify-center rounded-full text-ink-muted active:bg-line ${focusRing}`}>
+        <CloseIcon />
+      </button>
+    </div>
+  )
+}
+
+interface PickerProps {
+  data: InventoryData
+  catalog: CatalogById
+  items: CatalogItem[]
+  scanned: ScannedProduct | null
+  onScanned: (scanned: ScannedProduct | null) => void
+  onPick: (selection: Selection) => void
+}
+
+function ProductPicker({ data, catalog, items, scanned, onScanned, onPick }: PickerProps) {
+  const { t } = useTranslation()
   const { pending } = useInventoryAction()
-  const [query, setQuery] = useState('')
+  const offline = useOffline()
+  const [query, setQuery] = useState(scanned?.name ?? '')
+  const [scanning, setScanning] = useState(false)
   const [deleting, setDeleting] = useState<{ product: Product; name: string } | null>(null)
 
-  const entries = useMemo<PickerEntry[]>(() => {
-    const inHouse = new Set(data.products.map((product) => product.catalog_item_id))
-    const withStock = new Set(data.lots.map((lot) => lot.product_id))
-    const byName = (a: PickerEntry, b: PickerEntry) => a.name.localeCompare(b.name, tag, { sensitivity: 'base' })
-    const fromHouse = data.products
-      .filter((product) => product.kind === 'food')
-      .map<PickerEntry>((product) => {
-        const item = product.catalog_item_id ? catalog.get(product.catalog_item_id) : undefined
-        const stocked = withStock.has(product.id)
-        return {
-          key: product.id,
-          name: productName(product, catalog, language),
-          icon: productIcon(product, catalog),
-          searchTerms: item ? [item.name_es, item.name_en, ...item.synonyms_es, ...item.synonyms_en] : [product.name],
-          subtitle: stocked ? t('add.inHouse') : t('add.noStock'),
-          selection: { type: 'product', product },
-          emptyProduct: stocked ? undefined : product,
-        }
-      })
-      .sort(byName)
-    const fromCatalog = items
-      .filter((item) => !inHouse.has(item.id))
-      .map<PickerEntry>((item) => ({
-        key: item.id,
-        name: language === 'en' ? item.name_en : item.name_es,
-        icon: item.icon,
-        searchTerms: [item.name_es, item.name_en, ...item.synonyms_es, ...item.synonyms_en],
-        subtitle: t(`categories.${item.category}`),
-        selection: { type: 'catalog', item },
-      }))
-      .sort(byName)
-    return [...fromHouse, ...fromCatalog]
-  }, [data.products, data.lots, catalog, items, language, tag, t])
-
-  const search = useMemo(() => createSearch(entries), [entries])
-  const results = search(query)
-  const typed = query.trim()
-  const exactMatch = results.some((entry) => entry.name.toLowerCase() === typed.toLowerCase())
-
-  const createButton = typed && !exactMatch && (
-    <button
-      type="button"
-      onClick={() => onPick({ type: 'new', name: typed })}
-      className={`min-h-14 w-full rounded-2xl border border-dashed border-brand px-4 text-left font-semibold text-brand ${focusRing}`}
-    >
-      {t('add.create', { name: typed })}
-    </button>
-  )
+  function handleScan(result: ScannedProduct) {
+    setScanning(false)
+    onScanned(result)
+    const known = productWithBarcode(data, result.barcode)
+    if (known) onPick({ type: 'product', product: known })
+    else if (result.name) setQuery(result.name)
+  }
 
   return (
     <Screen
@@ -109,72 +95,40 @@ function ProductPicker({ data, catalog, items, onPick }: { data: InventoryData; 
       backTo="/"
       main={
         <div className="flex flex-col gap-2">
-          {results.length === 0 && createButton}
-          <ul className="flex flex-col gap-2">
-            {results.map((entry) => (
-              <li key={entry.key} className="flex items-center rounded-2xl border border-line bg-surface">
-                <button
-                  type="button"
-                  onClick={() => onPick(entry.selection)}
-                  className={`flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-2 text-left ${focusRing}`}
-                >
-                  <span aria-hidden="true" className="w-9 shrink-0 text-center text-2xl leading-none">
-                    {entry.icon}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{entry.name}</span>
-                    <span className="block truncate text-sm text-ink-muted">{entry.subtitle}</span>
-                  </span>
-                  {!entry.emptyProduct && (
-                    <span className="shrink-0 text-ink-muted">
-                      <ChevronIcon />
-                    </span>
-                  )}
-                </button>
-                {entry.emptyProduct && (
-                  <button
-                    type="button"
-                    aria-label={t('add.delete', { name: entry.name })}
-                    disabled={pending}
-                    onClick={() => setDeleting({ product: entry.emptyProduct!, name: entry.name })}
-                    className={`mr-1 flex size-11 shrink-0 items-center justify-center rounded-xl text-ink-muted active:bg-line disabled:opacity-40 ${focusRing}`}
-                  >
-                    <TrashIcon />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-          {results.length > 0 && createButton}
+          {scanned && <ScannedBanner scanned={scanned} onClear={() => onScanned(null)} />}
+          {scanned && <p className="px-1 text-sm text-ink-muted">{t('barcode.pickProduct')}</p>}
+          <ProductResults
+            data={data}
+            catalog={catalog}
+            items={items}
+            query={query}
+            onPick={onPick}
+            onDelete={(product, name) => setDeleting({ product, name })}
+            deleteDisabled={pending}
+          />
           {deleting && (
-            <DeleteProductSheet
-              product={deleting.product}
-              name={deleting.name}
-              onClose={() => setDeleting(null)}
-              onDeleted={() => setDeleting(null)}
-            />
+            <DeleteProductSheet product={deleting.product} name={deleting.name} onClose={() => setDeleting(null)} onDeleted={() => setDeleting(null)} />
           )}
+          {scanning && <ScanBarcodeDialog onResult={handleScan} onClose={() => setScanning(false)} />}
         </div>
       }
     >
       <div className="flex flex-col gap-2.5">
-        <div className="relative">
-          <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-ink-muted">
-            <SearchIcon />
-          </span>
-          <input
-            type="search"
-            aria-label={t('add.searchLabel')}
-            placeholder={t('add.searchPlaceholder')}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            className={`min-h-12 w-full appearance-none rounded-xl border border-line bg-surface pr-3 pl-11 text-base text-ink ${focusRing}`}
-          />
+        <SearchField value={query} onChange={setQuery} />
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            disabled={offline}
+            onClick={() => setScanning(true)}
+            className={`min-h-10 rounded-xl px-1 text-sm font-semibold text-brand disabled:opacity-40 ${focusRing}`}
+          >
+            {t('barcode.scan')}
+          </button>
+          <Link to="/add/leftover" className={`flex min-h-10 items-center gap-1 rounded-xl px-1 text-sm font-semibold text-brand ${focusRing}`}>
+            {t('add.leftover')}
+            <ChevronIcon />
+          </Link>
         </div>
-        <Link to="/add/leftover" className={`flex min-h-10 items-center justify-between rounded-xl px-1 text-sm font-semibold text-brand ${focusRing}`}>
-          {t('add.leftover')}
-          <ChevronIcon />
-        </Link>
       </div>
     </Screen>
   )
@@ -191,21 +145,38 @@ function defaultZone(selection: Selection, data: InventoryData, catalog: Catalog
   return 'fridge'
 }
 
-function LotForm({ selection, data, catalog, onBack }: { selection: Selection; data: InventoryData; catalog: CatalogById; onBack: () => void }) {
+interface LotFormProps {
+  selection: Selection
+  data: InventoryData
+  catalog: CatalogById
+  scanned: ScannedProduct | null
+  onScanned: (scanned: ScannedProduct | null) => void
+  onBack: () => void
+}
+
+function LotForm({ selection, data, catalog, scanned, onScanned, onBack }: LotFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { language, today } = useDateContext()
+  const { language, today, tag } = useDateContext()
   const houseId = useActiveHouseId()
+  const samples = useDateSamples(houseId)
+  const offline = useOffline()
   const { run, pending, errorKey } = useInventoryAction({ inlineErrors: true })
 
   const existing = selection.type === 'product' ? selection.product : null
   const item = selection.type === 'catalog' ? selection.item : null
+  // El contenido del envase que da Open Food Facts sirve para un producto nuevo.
+  const scannedContent = selection.type === 'new' && scanned?.contentAmount && scanned.contentUnit ? scanned : null
 
-  const [quantityKind, setQuantityKind] = useState<QuantityKind>(existing?.quantity_kind ?? item?.default_quantity_kind ?? 'count')
+  const [quantityKind, setQuantityKind] = useState<QuantityKind>(
+    existing?.quantity_kind ?? item?.default_quantity_kind ?? (scannedContent ? 'divisible' : 'count'),
+  )
   const [unitLabel, setUnitLabel] = useState<string>(existing?.unit_label ?? item?.default_unit_label ?? 'unit')
-  const [contentAmount, setContentAmount] = useState(String(item?.default_content_amount ?? ''))
+  const [contentAmount, setContentAmount] = useState(
+    item?.default_content_amount != null ? String(item.default_content_amount) : scannedContent ? formatForInput(scannedContent.contentAmount!, tag) : '',
+  )
   const [contentUnit, setContentUnit] = useState<ContentUnit>(
-    item?.default_quantity_kind === 'divisible' && item.default_content_unit ? item.default_content_unit : 'ml',
+    item?.default_quantity_kind === 'divisible' && item.default_content_unit ? item.default_content_unit : (scannedContent?.contentUnit ?? 'ml'),
   )
   const [bulkUnit, setBulkUnit] = useState<BulkUnit>(
     (existing?.bulk_unit ?? (item?.default_quantity_kind === 'bulk' ? item.default_content_unit : null) ?? 'kg') as BulkUnit,
@@ -218,8 +189,9 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
   const [dateType, setDateType] = useState<PrintedDateType | null>(null)
   const [frozenAt, setFrozenAt] = useState(today)
   const [reminderDate, setReminderDate] = useState('')
-  const [brand, setBrand] = useState('')
+  const [brand, setBrand] = useState(scanned?.brand ?? '')
   const [purchasedAt, setPurchasedAt] = useState(today)
+  const [scanning, setScanning] = useState(false)
   const [formError, setFormError] = useState<'quantity' | 'content' | 'dateType' | null>(null)
 
   const name =
@@ -229,6 +201,13 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
         ? language === 'en' ? selection.item.name_en : selection.item.name_es
         : productName(selection.product, catalog, language)
   const icon = existing ? productIcon(existing, catalog) : item ? item.icon : categoryIcons[category]
+  const learned = existing ? learnedDate(samples.data ?? [], existing.id, purchasedAt || today) : null
+
+  function handleScan(result: ScannedProduct) {
+    setScanning(false)
+    onScanned(result)
+    if (!brand.trim() && result.brand) setBrand(result.brand)
+  }
 
   const countingFields = (
     <>
@@ -310,6 +289,9 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
         p_purchased_at: purchasedAt || undefined,
         p_frozen_at: zone === 'freezer' ? frozenAt || undefined : undefined,
         p_reminder_date: zone === 'freezer' ? reminderDate || undefined : undefined,
+        p_source: scanned ? 'barcode' : 'manual',
+        p_barcode: scanned?.barcode,
+        p_image_url: scanned?.imageUrl ?? undefined,
       }),
     )
     if (done) void navigate('/', { replace: true })
@@ -330,6 +312,14 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
       </header>
       <main className="safe-bottom mx-auto w-full max-w-xl flex-1 p-4">
         <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5">
+          {scanned ? (
+            <ScannedBanner scanned={scanned} onClear={() => onScanned(null)} />
+          ) : (
+            <Button variant="secondary" disabled={offline} onClick={() => setScanning(true)}>
+              {t('barcode.scanToFill')}
+            </Button>
+          )}
+
           {selection.type === 'new' && (
             <SelectField label={t('form.category')} value={category} onChange={(event) => setCategory(event.target.value as Category)}>
               {categories.map((value) => (
@@ -389,7 +379,16 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
             </>
           )}
 
-          <PrintedDateFields date={printedDate} type={dateType} onDateChange={setPrintedDate} onTypeChange={setDateType} />
+          <DateEntry
+            name={name}
+            date={printedDate}
+            type={dateType}
+            learned={learned}
+            onChange={(date, type) => {
+              setPrintedDate(date)
+              setDateType(type)
+            }}
+          />
 
           <details className="rounded-xl border border-line bg-surface p-3">
             <summary className="min-h-8 cursor-pointer font-medium">{t('form.moreDetails')}</summary>
@@ -413,6 +412,7 @@ function LotForm({ selection, data, catalog, onBack }: { selection: Selection; d
             {t('form.submit')}
           </Button>
         </form>
+        {scanning && <ScanBarcodeDialog onResult={handleScan} onClose={() => setScanning(false)} />}
       </main>
     </div>
   )
@@ -422,18 +422,38 @@ export function AddPage() {
   const inventory = useInventory()
   const catalog = useCatalog()
   const [params] = useSearchParams()
+  const location = useLocation()
   const [selection, setSelection] = useState<Selection | null>(null)
+  const [scanned, setScanned] = useState<ScannedProduct | null>(() => (location.state as AddPageState | null)?.scanned ?? null)
+  // Tras "Cambiar", el producto que venía elegido deja de elegirse solo.
+  const [dismissed, setDismissed] = useState(false)
 
   if (inventory.isPending || catalog.isPending) return <FullScreenLoader />
   if (inventory.isLoadingError) return <LoadError onRetry={() => void inventory.refetch()} />
   if (catalog.isLoadingError) return <LoadError onRetry={() => void catalog.refetch()} />
 
-  // Desde el detalle de un producto agotado se llega con el producto ya elegido.
-  const preselected = inventory.data.products.find((product) => product.id === params.get('product'))
+  // Desde el detalle de un producto agotado se llega con el producto ya elegido, y desde
+  // "Escanear código", con el producto que ya tiene ese código en casa.
+  const preselected = dismissed
+    ? undefined
+    : (inventory.data.products.find((product) => product.id === params.get('product')) ??
+      (scanned ? productWithBarcode(inventory.data, scanned.barcode) : undefined))
   const current: Selection | null = selection ?? (preselected ? { type: 'product', product: preselected } : null)
 
   if (current) {
-    return <LotForm selection={current} data={inventory.data} catalog={catalog.byId} onBack={() => setSelection(null)} />
+    return (
+      <LotForm
+        selection={current}
+        data={inventory.data}
+        catalog={catalog.byId}
+        scanned={scanned}
+        onScanned={setScanned}
+        onBack={() => {
+          setSelection(null)
+          setDismissed(true)
+        }}
+      />
+    )
   }
-  return <ProductPicker data={inventory.data} catalog={catalog.byId} items={catalog.items} onPick={setSelection} />
+  return <ProductPicker data={inventory.data} catalog={catalog.byId} items={catalog.items} scanned={scanned} onScanned={setScanned} onPick={setSelection} />
 }

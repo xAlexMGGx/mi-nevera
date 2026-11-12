@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useUser } from '../auth/AuthProvider'
 import { supabase } from '../lib/supabase'
 
-const houseQueries = ['inventory', 'movements', 'house', 'houses', 'members', 'invites']
+const houseQueries = ['inventory', 'movements', 'house', 'houses', 'members', 'invites', 'dateSamples']
 // Una misma operación puede generar varias señales seguidas.
 const debounceMs = 250
 // Cerrar un canal tarda un momento y, mientras tanto, pedir otro con el mismo nombre devuelve el

@@ -15,6 +15,15 @@ const codes = [
   'incompatible_product',
   'invalid_invite',
   'already_member',
+  // Lecturas con IA (Edge Functions parse-receipt y read-date).
+  'ai_not_configured',
+  'ai_no_credit',
+  'ai_quota',
+  'ai_unavailable',
+  'ai_unreadable',
+  'image_too_large',
+  // La foto no se ha podido abrir en el móvil (src/lib/image.ts).
+  'image_unreadable',
 ] as const
 
 type Code = (typeof codes)[number]
@@ -24,6 +33,6 @@ export type ErrorKey = `errors.${Code | 'network' | 'unknown'}`
 export function errorKey(error: unknown): ErrorKey {
   const message = String((error as { message?: unknown } | null)?.message ?? '')
   if ((codes as readonly string[]).includes(message)) return `errors.${message as Code}`
-  if (/failed to fetch|load failed|networkerror|network request failed/i.test(message)) return 'errors.network'
+  if (/failed to fetch|load failed|networkerror|network request failed|failed to send a request/i.test(message)) return 'errors.network'
   return 'errors.unknown'
 }

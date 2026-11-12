@@ -18,6 +18,8 @@ import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
 import { useFollowingState } from '../lib/followingState'
 import { supabase } from '../lib/supabase'
+import type { ScannedProduct } from '../scan/openFoodFacts'
+import { ScanBarcodeDialog } from '../scan/ScanBarcodeDialog'
 import {
   AdjustSheet,
   ConsumeAmountSheet,
@@ -37,6 +39,7 @@ type SheetState =
   | { type: 'move'; lot: Lot; target?: ZoneKind }
   | { type: 'discard'; lot: Lot }
   | { type: 'edit'; lot: Lot }
+  | { type: 'barcode'; lot: Lot }
   | { type: 'exact'; unit: OpenedUnit }
   | { type: 'unitDates'; unit: OpenedUnit }
   | { type: 'rename' }
@@ -174,6 +177,7 @@ function LotCard({
           {isFrozen && <span>{t('inventory.frozenSince', { date: formatDayMonth(lot.frozen_at!) })}</span>}
           {lot.thawed_at && <span>{t('product.thawedOn', { date: formatDayMonth(lot.thawed_at) })}</span>}
           {lot.opened_at && <span>{t('product.openedSince', { date: formatDate(lot.opened_at, tag, today) })}</span>}
+          {lot.barcode && <span>{t('product.barcode', { code: lot.barcode })}</span>}
         </div>
         {(lot.quantity > 0 || units.length === 0) && <DateBadge item={lot} />}
         {lot.opened_at && !isDish && (
@@ -210,6 +214,11 @@ function LotCard({
         )}
         <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'discard', lot })}>{t('product.actions.discard')}</ActionChip>
         <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'edit', lot })}>{t('product.actions.edit')}</ActionChip>
+        {!isDish && (
+          <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'barcode', lot })}>
+            {lot.barcode ? t('product.actions.changeBarcode') : t('product.actions.assignBarcode')}
+          </ActionChip>
+        )}
       </div>
     </div>
   )
@@ -310,6 +319,21 @@ export function ProductPage() {
   const canOpenAny = !isDish && !isBulk && lots.some((lot) => lot.quantity > 0 && !lot.opened_at)
   const number = lots.find((lot) => lot.container_number !== null)?.container_number
 
+  // "Asignar código" (SPEC §11): guarda el código y, si el lote no los tiene, la foto y la marca.
+  function assignBarcode(lot: Lot, scanned: ScannedProduct) {
+    setSheet(null)
+    void run('edited', () =>
+      supabase.rpc('update_lot', {
+        p_lot_id: lot.id,
+        p_patch: {
+          barcode: scanned.barcode,
+          ...(lot.image_url ? {} : { image_url: scanned.imageUrl }),
+          ...(lot.brand || !scanned.brand ? {} : { brand: scanned.brand }),
+        },
+      }),
+    )
+  }
+
   function renderSheet() {
     if (!sheet || !product) return null
     const close = () => setSheet(null)
@@ -323,7 +347,11 @@ export function ProductPage() {
       case 'discard':
         return <DiscardSheet product={product} lot={sheet.lot} units={unitsOf(sheet.lot)} onClose={close} />
       case 'edit':
-        return <EditLotSheet product={product} lot={sheet.lot} onClose={close} />
+        return <EditLotSheet product={product} name={name} lot={sheet.lot} onClose={close} />
+      case 'barcode': {
+        const lot = sheet.lot
+        return <ScanBarcodeDialog onResult={(scanned) => assignBarcode(lot, scanned)} onClose={close} />
+      }
       case 'exact':
         return <ExactRemainingSheet product={product} unit={sheet.unit} onClose={close} />
       case 'unitDates':

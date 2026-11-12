@@ -16,5 +16,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["vite.config.ts", "pwa-assets.config.ts", "tests", "scripts", "src/domain/types.ts", "supabase/functions/_shared/dateStatus.ts", "supabase/functions/_shared/digest.ts"]
+  "include": ["vite.config.ts", "pwa-assets.config.ts", "tests", "scripts", "src/domain/types.ts", "supabase/functions/_shared/dateStatus.ts", "supabase/functions/_shared/digest.ts", "supabase/functions/_shared/vocabulary.ts", "supabase/functions/_shared/receipt.ts", "supabase/functions/_shared/readDate.ts", "supabase/functions/_shared/image.ts"]
 }
