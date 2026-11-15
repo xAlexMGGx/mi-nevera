@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { HouseSwitcher } from '../components/HouseSwitcher'
-import { GearIcon, SearchIcon } from '../components/icons'
+import { CardIcon, GearIcon, GridIcon, ListIcon, SearchIcon } from '../components/icons'
+import { ProductPhoto } from '../components/ProductPhoto'
 import { Screen, topBarIcon } from '../components/Screen'
 import { StatusBadge } from '../components/StatusBadge'
 import { Button, FullScreenLoader, LoadError, buttonClass, focusRing } from '../components/ui'
@@ -12,6 +13,7 @@ import { useActiveHouse } from '../data/house'
 import { useInventory, useInventoryAction } from '../data/inventory'
 import { formatDayMonth } from '../domain/dates'
 import { buildProductViews, sortModes, sortViews, type ProductView, type Zone } from '../domain/inventory'
+import { cardImage, extraBrands } from '../domain/photos'
 import { summarize } from '../domain/quantity'
 import { createSearch } from '../domain/search'
 import { zoneKinds, type Category, type ZoneKind } from '../domain/types'
@@ -93,7 +95,75 @@ function ProductRow({ view, zoneId }: { view: ProductView; zoneId?: string }) {
   )
 }
 
-function CategoryGroups({ views, zoneId }: { views: ProductView[]; zoneId?: string }) {
+/** Tarjeta (SPEC §12): imagen, nombre, cantidad y fecha. Sin marca: solo "+N" si hay varias. */
+function ProductCard({ view, large }: { view: ProductView; large: boolean }) {
+  const { t } = useTranslation()
+  const { tag } = useDateContext()
+  const { product } = view
+  const extra = extraBrands(view.lots)
+
+  return (
+    <li className="min-w-0">
+      <Link to={`/product/${product.id}`} className={`flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface ${focusRing}`}>
+        <div className={`relative w-full ${large ? 'aspect-[4/3]' : 'aspect-square'}`}>
+          <ProductPhoto
+            src={cardImage(view.lots, product)}
+            icon={view.icon}
+            className="size-full"
+            iconClassName={`size-full bg-canvas ${large ? 'text-7xl' : 'text-5xl'}`}
+          />
+          {view.containerNumber !== null && (
+            <span className="absolute top-2 left-2 rounded-full bg-brand px-2 py-0.5 text-xs font-bold text-on-brand">
+              {t('inventory.containerNumber', { number: view.containerNumber })}
+            </span>
+          )}
+          {extra > 0 && (
+            <span
+              aria-label={t('inventory.moreBrands', { count: extra })}
+              className="absolute top-2 right-2 rounded-full bg-ink/75 px-2 py-0.5 text-xs font-semibold text-canvas"
+            >
+              {t('inventory.moreBrandsShort', { count: extra })}
+            </span>
+          )}
+        </div>
+        <span className="flex flex-1 flex-col items-start gap-1 p-2.5">
+          <span className="line-clamp-2 font-semibold leading-snug">{view.name}</span>
+          <span className="line-clamp-2 text-sm text-ink-muted">{summarize(product, view.lots, view.units, t, tag)}</span>
+          {view.rowDate ? (
+            <StatusBadge rowDate={view.rowDate} />
+          ) : (
+            view.frozenSince && (
+              <span className="text-xs font-semibold text-ink-muted">{t('inventory.frozenSince', { date: formatDayMonth(view.frozenSince) })}</span>
+            )
+          )}
+        </span>
+      </Link>
+    </li>
+  )
+}
+
+type Layout = { view: 'list' | 'cards'; columns: '1' | '2' }
+
+function ProductList({ views, zoneId, layout }: { views: ProductView[]; zoneId?: string; layout: Layout }) {
+  if (layout.view === 'list') {
+    return (
+      <ul className="flex flex-col gap-2">
+        {views.map((view) => (
+          <ProductRow key={view.product.id} view={view} zoneId={zoneId} />
+        ))}
+      </ul>
+    )
+  }
+  return (
+    <ul className={`grid gap-3 ${layout.columns === '2' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      {views.map((view) => (
+        <ProductCard key={view.product.id} view={view} large={layout.columns === '1'} />
+      ))}
+    </ul>
+  )
+}
+
+function CategoryGroups({ views, zoneId, layout }: { views: ProductView[]; zoneId?: string; layout: Layout }) {
   const { t } = useTranslation()
   const groups: { category: Category; views: ProductView[] }[] = []
   for (const view of views) {
@@ -106,12 +176,29 @@ function CategoryGroups({ views, zoneId }: { views: ProductView[]; zoneId?: stri
       {groups.map((group) => (
         <section key={group.category} className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink-muted">{t(`categories.${group.category}`)}</h2>
-          <ul className="flex flex-col gap-2">
-            {group.views.map((view) => (
-              <ProductRow key={view.product.id} view={view} zoneId={zoneId} />
-            ))}
-          </ul>
+          <ProductList views={group.views} zoneId={zoneId} layout={layout} />
         </section>
+      ))}
+    </div>
+  )
+}
+
+/** Lista · Tarjetas en dos columnas · Tarjetas en una columna, con iconos para que quepa todo en una fila. */
+function ToggleGroup<T extends string>({ label, options, value, onChange }: { label: string; options: { value: T; label: string; icon: ReactNode }[]; value: T; onChange: (value: T) => void }) {
+  return (
+    <div role="group" aria-label={label} className="flex shrink-0 rounded-lg border border-line bg-surface p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          aria-label={option.label}
+          title={option.label}
+          onClick={() => onChange(option.value)}
+          className={`flex size-9 items-center justify-center rounded-md ${value === option.value ? 'bg-brand text-on-brand' : 'text-ink-muted'} ${focusRing}`}
+        >
+          {option.icon}
+        </button>
       ))}
     </div>
   )
@@ -135,6 +222,9 @@ export function InventoryPage() {
   const [zone, setZone] = usePersistedState('nevera.inventory.zone', zoneFilters, 'all')
   const [leftovers, setLeftovers] = usePersistedState('nevera.inventory.leftovers', ['no', 'yes'], 'no')
   const [sort, setSort] = usePersistedState('nevera.inventory.sort', sortModes, 'date')
+  const [viewMode, setViewMode] = usePersistedState('nevera.inventory.view', ['list', 'cards'], 'list')
+  const [columns, setColumns] = usePersistedState('nevera.inventory.columns', ['1', '2'], '2')
+  const layout: Layout = { view: viewMode, columns }
 
   const views = useMemo(() => {
     if (!inventory.data) return []
@@ -183,14 +273,8 @@ export function InventoryPage() {
         </p>
       )
     }
-    if (sort === 'category' && !query.trim()) return <CategoryGroups views={views} zoneId={zoneId} />
-    return (
-      <ul className="flex flex-col gap-2">
-        {views.map((view) => (
-          <ProductRow key={view.product.id} view={view} zoneId={zoneId} />
-        ))}
-      </ul>
-    )
+    if (sort === 'category' && !query.trim()) return <CategoryGroups views={views} zoneId={zoneId} layout={layout} />
+    return <ProductList views={views} zoneId={zoneId} layout={layout} />
   }
 
   return (
@@ -234,22 +318,41 @@ export function InventoryPage() {
             onClick={() => setLeftovers(leftovers === 'yes' ? 'no' : 'yes')}
           />
         </div>
-        {hasStock && !query.trim() && (
-          <label className="flex items-center justify-end gap-2 text-sm text-ink-muted">
-            {t('inventory.sortLabel')}
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value as (typeof sortModes)[number])}
-              // Con letra menor de 16 px, el iPhone hace zoom al tocarlo.
-              className={`min-h-9 rounded-lg border border-line bg-surface px-2 text-base font-medium text-ink ${focusRing}`}
-            >
-              {sortModes.map((mode) => (
-                <option key={mode} value={mode}>
-                  {t(`inventory.sort.${mode}`)}
-                </option>
-              ))}
-            </select>
-          </label>
+        {hasStock && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <ToggleGroup
+              label={t('inventory.view.label')}
+              value={viewMode === 'list' ? 'list' : `cards${columns}`}
+              onChange={(value) => {
+                if (value === 'list') return setViewMode('list')
+                setViewMode('cards')
+                setColumns(value === 'cards1' ? '1' : '2')
+              }}
+              options={[
+                { value: 'list', icon: <ListIcon />, label: t('inventory.view.list') },
+                { value: 'cards2', icon: <GridIcon />, label: t('inventory.view.cardsTwo') },
+                { value: 'cards1', icon: <CardIcon />, label: t('inventory.view.cardsOne') },
+              ]}
+            />
+            {!query.trim() && (
+              <label className="flex items-center gap-2 text-sm text-ink-muted">
+                <span className="sr-only">{t('inventory.sortLabel')}</span>
+                <select
+                  aria-label={t('inventory.sortLabel')}
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value as (typeof sortModes)[number])}
+                  // Con letra menor de 16 px, el iPhone hace zoom al tocarlo.
+                  className={`min-h-9 rounded-lg border border-line bg-surface px-2 text-base font-medium text-ink ${focusRing}`}
+                >
+                  {sortModes.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {t(`inventory.sort.${mode}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
         )}
       </div>
     </Screen>

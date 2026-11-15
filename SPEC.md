@@ -101,7 +101,7 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
   - `content_amount` + `content_unit` (`g`|`kg`|`ml`|`l`|`ud`) — solo `divisible`.
   - `bulk_unit` (`g`|`kg`|`ml`|`l`) — solo `bulk`.
   - `preferred_brand` (nullable), `brand_notes` (texto libre, p. ej. "la de Auchan no me gustó").
-  - `image_url` (nullable).
+  - `image_url` (nullable). URL `https` (Open Food Facts) o foto propia `photo:<ruta en Storage>` (fase 5); igual en `lots.image_url`.
   - `embedding vector` (fase 8).
 - **`lots`**:
   - `house_id`, `zone_id`, `product_id`.
@@ -181,7 +181,7 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 
 ## 6. Navegación y pantallas
 
-**Cabecera:** selector de casa activa (nombre + desplegable) y engranaje de Ajustes.
+**Cabecera:** selector de casa activa (nombre + desplegable) y engranaje de Ajustes. En la fase 9, un botón **"?"** al lado del engranaje abre el tutorial.
 
 **Barra inferior:**
 1. **Inventario**
@@ -438,6 +438,15 @@ Al asignar un código a un lote o a una línea del ticket, el producto ya está 
 - La tarjeta muestra: imagen, nombre, resumen de cantidad, chip de estado/fecha. Sin texto de marca.
 - Imágenes de Open Food Facts por URL; fotos propias en Supabase Storage (comprimidas).
 
+**Cómo quedó (fase 5):**
+- En la barra del inventario, tres iconos: Lista · Tarjetas en dos columnas · Tarjetas en una columna, junto al orden. Ordenar por categoría agrupa también las tarjetas.
+- La tarjeta lleva el número del táper ("#3") arriba a la izquierda y "+N" arriba a la derecha. No lleva −1: se toca para ir al detalle.
+- Imagen de la tarjeta: si el lote que caduca antes no tiene foto ni la tiene el producto, se usa la de otro lote antes que el icono.
+- Carrusel: una foto por marca, la del lote más próximo de esa marca, con la marca encima. Sin fotos de lotes, la del producto; sin ninguna, el icono de siempre.
+- **Fotos propias:** "Añadir foto" en el detalle (foto del producto), "Foto" en cada lote y "Añadir foto" en el formulario de alta y del ticket (§6.3). Se reducen en el móvil a JPEG de 1000 px y se suben a un bucket privado (`photos`, como mucho 1 MB). Cada persona sube a su carpeta, y en la base de datos se guardan como `photo:<ruta>`, solo si la ruta es de quien la guarda.
+- **Quién ve una foto propia:** quien la subió y los miembros de cualquier casa con un lote o producto que la use, también tras moverlo a otra casa. Se piden URL firmadas que valen una semana.
+- **Sin conexión:** el service worker guarda las fotos (Open Food Facts y propias) hasta 21 días, como los datos. Al cerrar sesión o eliminar la cuenta, se borran del móvil.
+
 ---
 
 ## 13. Lista de la compra (fase 6)
@@ -558,6 +567,12 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 ### Fase 8 · Búsqueda semántica
 - §15, previa elección del proveedor de embeddings.
 
+### Fase 9 · Tutorial
+- Añadida por el propietario el 2026-11-15. Va al final porque explica todas las funcionalidades, también las de las fases 6 a 8.
+- La primera vez que alguien entra en la app, un tutorial le enseña la app y sus funcionalidades.
+- Se puede volver a ver en cualquier momento con un botón **"?"** en la cabecera, al lado del engranaje de Ajustes.
+- Detalles (pasos, formato, si se puede saltar, cómo se recuerda que ya se vio) por definir con el propietario antes de empezar la fase.
+
 ---
 
 ## 18. Fuera de alcance
@@ -584,11 +599,19 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 4 · Ticket y código de barras. El propietario ha probado la primera parte con `claude-sonnet-5-5` (ticket y fechas, bien). Segunda parte terminada a petición suya: identificar por código y un formulario único. Pendiente de aplicar la migración nueva, subir las funciones, publicar y confirmar en el iPhone.
+**Fase actual:** 5 · Tarjetas con foto. Código terminado, pendiente de aplicar la migración, publicar y confirmar en el iPhone.
 
 ### Hecho
 
-**Fase 4 · Ticket y código de barras**
+**Fase 5 · Tarjetas con foto**
+
+- Vista de tarjetas en una o dos columnas, que se recuerda, con imagen, nombre, cantidad, fecha, "+N" marcas y número de táper (§12).
+- Carrusel con la foto de cada marca en el detalle del producto.
+- Fotos propias del producto, de cada lote y al añadir (también en el ticket), en un bucket privado de Supabase Storage, con permisos por casa.
+- Las fotos se ven sin conexión y se borran del móvil al cerrar sesión.
+- Tests: permisos del bucket contra Postgres real (subir solo a tu carpeta, ver solo si tu casa la usa, también tras mover un lote), qué fotos se pueden guardar, foto del producto, qué imagen lleva cada tarjeta, "+N" y carrusel. Recorrido en el navegador con Storage emulado.
+
+**Fase 4 · Ticket y código de barras (confirmada, con `claude-sonnet-5-5`)**
 
 - ＋ abre un menú: Añadir manualmente · Escanear código de barras · Escanear ticket.
 - Escanear ticket: foto con la cámara o de la galería (hasta 3 partes si es largo), reducida en el móvil a 1600 px. Edge Function `parse-receipt` con Claude, respuesta validada con Zod y emparejada con los productos, el catálogo y los alias de la casa.
@@ -657,9 +680,11 @@ Segunda parte, tras la primera prueba del propietario:
 
 ### Pendiente
 
-- **Fase 4:** aplicar la migración nueva (`npm run db:push` y `npm run db:types`), subir las funciones (`npm run functions:deploy`, ahora con `match-product`), publicar y comprobar la aceptación en el iPhone. La identificación por código no se ha probado aún con Claude de verdad: en las pruebas su respuesta estaba preparada de antemano.
 - **Revisión del propietario:** comprobar el contenido de conservación con sus fuentes (`src/content/conservation/SOURCES.md`) y poner `reviewed: true` en `review.json`. Faltan los lácteos abiertos, sin fuente accesible.
-- **Fase 5:** sin empezar, a la espera de confirmación del propietario.
+- **Fase 5:** aplicar la migración (`npm run db:push`), publicar y comprobar en el iPhone. Probado contra el SQL real con Storage emulado; falta el Storage real de Supabase.
+- **Fotos sin usar:** una foto propia que ya no usa ningún lote ni producto se queda en Storage, aunque nadie más que quien la subió puede verla. No se borra al quitarla, porque un lote dividido o movido comparte la misma foto. Si algún día ocupa demasiado, se puede añadir un limpiador.
+- **Fase 6:** sin empezar, a la espera de confirmación del propietario.
+- **Fase 9 · Tutorial:** en el backlog (§17). Antes de empezarla, acordar con el propietario los detalles.
 
 ### Decisiones tomadas (2026-11-09)
 
@@ -721,3 +746,12 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **Identificar por código con IA (segunda parte):** solo la primera vez que la casa ve un código, porque después lo recuerda. Límite propio de 100 al día. El catálogo va en caché de Claude, porque al vaciar la compra se escanean varios seguidos. Se reconoce por catálogo o por el producto de la casa; ante la duda, se propone un producto nuevo: un producto nuevo se corrige fácil, un emparejamiento equivocado no.
 - **Códigos recordados con un trigger sobre los lotes**, en vez de en cada función: así se apuntan igual al añadir, con ticket, al asignar el código o al mover entre casas. El último producto con ese código es el que vale. No entran en Deshacer, como algo aprendido.
 - **Formulario único:** "Cómo se cuenta" desaparece. La unidad elegida y el contenido de cada envase lo deciden: con contenido, `divisible`; sin él, `count`; con kg, g, l o ml, `bulk`. La zona son botones, como ya era en el ticket.
+
+**Fase 5**
+
+- **Fotos propias en un bucket privado**, con URL firmadas, y no en uno público: las URL públicas no caducan y cualquiera con el enlace vería la foto. Los permisos siguen a la casa que usa la foto, no a la persona, para que al mover un lote la foto se vea en la casa nueva.
+- **Dónde se hacen fotos propias:** del producto (fallback de la tarjeta), de cada lote (el carrusel es por marca, así que cada envase puede tener la suya) y al añadir. En el SPEC solo constaba que van a Storage.
+- **Una foto propia solo la puede enlazar quien la subió:** así nadie puede usar la ruta de la foto de otra persona para verla desde su casa.
+- **La tarjeta no lleva −1:** el SPEC enumera lo que muestra y no incluye acciones. La lista sigue teniéndolo.
+- **Vista con iconos:** Lista, dos columnas y una columna en un solo grupo, para que quepa en una fila con el orden.
+- **Los códigos de barras solo recuerdan fotos de Open Food Facts**, no las propias.

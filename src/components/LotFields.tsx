@@ -11,6 +11,7 @@ import { scanFacts } from '../scan/identify'
 import { ScanBarcodeDialog } from '../scan/ScanBarcodeDialog'
 import { CloseIcon } from './icons'
 import { DateEntry } from './DateEntry'
+import { PhotoSheet } from './PhotoSheet'
 import { ProductPhoto } from './ProductPhoto'
 import { QuantityUnitField } from './QuantityUnitField'
 import { ShelfLifeChip } from './ShelfLifeChip'
@@ -41,6 +42,7 @@ export function LotFields({ line, houseId, house, learned, purchasedAt, update, 
   const catalog = useCatalog()
   const offline = useOffline()
   const [scanning, setScanning] = useState(false)
+  const [editingPhoto, setEditingPhoto] = useState(false)
 
   const { target } = line
   const { name, icon } = lineLabel(target, house.products, catalog.byId, language)
@@ -140,14 +142,26 @@ export function LotFields({ line, houseId, house, learned, purchasedAt, update, 
 
       <TextField label={t('form.brand')} autoComplete="off" value={line.brand} onChange={(event) => patch({ brand: event.target.value })} />
 
+      <div className="flex items-center gap-3 rounded-xl border border-line p-2.5">
+        <ProductPhoto src={line.imageUrl} icon={icon} className="size-14 rounded-lg" iconClassName="size-14 rounded-lg bg-canvas text-3xl" />
+        <p className="min-w-0 flex-1 text-sm">{line.imageUrl ? t('photo.hasPhoto') : t('photo.label')}</p>
+        <button
+          type="button"
+          disabled={offline}
+          onClick={() => setEditingPhoto(true)}
+          className={`min-h-10 shrink-0 px-2 text-sm font-semibold text-brand disabled:opacity-40 ${focusRing}`}
+        >
+          {line.imageUrl ? t('photo.change') : t('photo.add')}
+        </button>
+      </div>
+
       {line.barcode ? (
-        <div className="flex items-center gap-3 rounded-xl border border-line p-2.5">
-          <ProductPhoto src={line.imageUrl} className="size-12 rounded-lg" />
+        <div className="flex items-center gap-3 rounded-xl border border-line p-2.5 pl-3.5">
           <p className="min-w-0 flex-1 truncate text-sm">{t('barcode.code', { code: line.barcode })}</p>
           <button
             type="button"
             aria-label={t('barcode.remove')}
-            onClick={() => patch({ barcode: null, imageUrl: null })}
+            onClick={() => patch({ barcode: null })}
             className={`flex size-10 shrink-0 items-center justify-center rounded-full text-ink-muted active:bg-line ${focusRing}`}
           >
             <CloseIcon />
@@ -157,6 +171,10 @@ export function LotFields({ line, houseId, house, learned, purchasedAt, update, 
         <Button variant="secondary" disabled={offline} onClick={() => setScanning(true)}>
           {t('barcode.scanToFill')}
         </Button>
+      )}
+
+      {editingPhoto && (
+        <PhotoSheet title={t('photo.titleLot')} current={line.imageUrl} onSave={(imageUrl) => patch({ imageUrl })} onClose={() => setEditingPhoto(false)} />
       )}
 
       {scanning && (

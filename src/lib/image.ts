@@ -15,17 +15,22 @@ export function fitWithin(width: number, height: number, limit = maxSide): { wid
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) }
 }
 
-async function canvasToImage(canvas: HTMLCanvasElement): Promise<PreparedImage> {
+async function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
   if (!blob) throw new Error('image_unreadable')
+  return blob
+}
+
+async function canvasToImage(canvas: HTMLCanvasElement): Promise<PreparedImage> {
+  const blob = await canvasToBlob(canvas)
   const buffer = new Uint8Array(await blob.arrayBuffer())
   let binary = ''
   for (let i = 0; i < buffer.length; i += 0x8000) binary += String.fromCharCode(...buffer.subarray(i, i + 0x8000))
   return { data: btoa(binary), mediaType: 'image/jpeg' }
 }
 
-function draw(source: CanvasImageSource, width: number, height: number): HTMLCanvasElement {
-  const size = fitWithin(width, height)
+function draw(source: CanvasImageSource, width: number, height: number, limit = maxSide): HTMLCanvasElement {
+  const size = fitWithin(width, height, limit)
   const canvas = document.createElement('canvas')
   canvas.width = size.width
   canvas.height = size.height
@@ -40,6 +45,18 @@ export async function prepareImageFile(file: Blob): Promise<PreparedImage> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
     return await canvasToImage(draw(bitmap, bitmap.width, bitmap.height))
+  } finally {
+    bitmap.close()
+  }
+}
+
+/** Foto de un producto para guardarla (SPEC §12): más pequeña, basta para una tarjeta. */
+export const photoSide = 1000
+
+export async function preparePhotoBlob(file: Blob): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  try {
+    return await canvasToBlob(draw(bitmap, bitmap.width, bitmap.height, photoSide))
   } finally {
     bitmap.close()
   }

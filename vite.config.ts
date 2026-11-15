@@ -33,6 +33,30 @@ export default defineConfig({
         globIgnores: ['**/apple-splash-*'],
         // Recibir y abrir las notificaciones (public/push-sw.js).
         importScripts: ['push-sw.js'],
+        // Las fotos de las tarjetas se guardan para verlas sin conexión (SPEC §12). Los nombres de
+        // las cachés están también en src/data/photos.ts, que las vacía al cerrar sesión.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/images\.openfoodfacts\.org\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'off-images',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
+            // Fotos propias: URL firmadas del bucket privado. La app reutiliza la misma URL varios días.
+            urlPattern: /\/storage\/v1\/object\/sign\/photos\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'own-photos',
+              // Como los datos guardados para consultar sin conexión (src/data/cacheConfig.ts).
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 21 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
     }),
   ],

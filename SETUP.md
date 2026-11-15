@@ -428,4 +428,5 @@ npm run functions:deploy
 | "El servicio de lectura no responde ahora mismo" | Anthropic está saturado o ha alcanzado tu límite de gasto mensual. Prueba más tarde o revisa los límites en la consola. |
 | La lectura no encuentra productos o se equivoca mucho | Haz la foto con el ticket plano, entero y con buena luz. Si es muy largo, usa **Añadir otra parte** para fotografiarlo en dos o tres trozos. Todo se puede corregir en la vista previa antes de añadir. |
 | La cámara no se abre dentro de la app | Acepta el permiso de cámara cuando lo pida. Si lo rechazaste, actívalo en los Ajustes del iPhone (**Apps → Safari → Cámara**). Mientras tanto, el botón **Hacer foto** abre la cámara del sistema. |
+| Una foto propia no se sube o no se ve | Falta la migración de la Fase 5: ejecuta `npm run db:push`. Crea el bucket privado `photos`, que verás en Supabase en **Storage**. Las fotos solo las ven las personas de las casas que las usan. |
 | La app deja de responder tras días sin usarla | El plan gratuito pausa el proyecto tras una semana con poca actividad. Entra en Supabase y restáuralo: no se pierde ningún dato. |

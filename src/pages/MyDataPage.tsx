@@ -8,6 +8,7 @@ import { Button, Card, Message } from '../components/ui'
 import { useDateContext } from '../data/context'
 import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
+import { clearPhotoCaches } from '../data/photos'
 import { supabase } from '../lib/supabase'
 
 /** En el móvil, Compartir permite guardarlo en Archivos. En el ordenador, se descarga. */
@@ -77,6 +78,7 @@ function DeleteAccountCard() {
       const { error } = await supabase.rpc('delete_account')
       if (error) throw error
       // Sin sesión, la app vuelve a la pantalla de inicio y borra los datos de este móvil.
+      await clearPhotoCaches()
       await supabase.auth.signOut({ scope: 'local' })
     },
   })

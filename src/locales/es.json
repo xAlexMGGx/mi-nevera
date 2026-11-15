@@ -290,7 +290,16 @@
       "openFeminine_one": "{{amount}} abierta",
       "openFeminine_other": "{{amount}} abiertas",
       "bulkOpen": "{{amount}} (abierto)"
-    }
+    },
+    "view": {
+      "label": "Vista",
+      "list": "Lista",
+      "cardsTwo": "Tarjetas en dos columnas",
+      "cardsOne": "Tarjetas en una columna"
+    },
+    "moreBrands_one": "{{count}} marca más",
+    "moreBrands_other": "{{count}} marcas más",
+    "moreBrandsShort": "+{{count}}"
   },
   "add": {
     "title": "Añadir",
@@ -495,7 +504,8 @@
       "discard": "Tirar",
       "edit": "Editar",
       "assignBarcode": "Asignar código",
-      "changeBarcode": "Cambiar código"
+      "changeBarcode": "Cambiar código",
+      "photo": "Foto"
     },
     "brandTitle": "Marca preferida",
     "preferredBrand": "Marca preferida",
@@ -503,7 +513,25 @@
     "brandNotesPlaceholder": "Por ejemplo: la de Auchan no me gustó",
     "emptyTitle": "No queda nada de este producto.",
     "addMore": "Añadir más",
-    "delete": "Eliminar producto"
+    "delete": "Eliminar producto",
+    "photos": "Fotos de cada marca",
+    "photoOf": "Foto {{current}} de {{total}}",
+    "noBrand": "Sin marca",
+    "addPhoto": "Añadir foto",
+    "changePhoto": "Cambiar foto"
+  },
+  "photo": {
+    "titleProduct": "Foto del producto",
+    "titleLot": "Foto de este lote",
+    "take": "Hacer foto",
+    "gallery": "Elegir de la galería",
+    "remove": "Quitar foto",
+    "uploading": "Subiendo la foto…",
+    "hint": "Se guarda reducida y solo la ven las personas de tus casas.",
+    "label": "Foto (opcional)",
+    "hasPhoto": "Con foto",
+    "add": "Añadir foto",
+    "change": "Cambiar"
   },
   "sheets": {
     "openUnits": "Abiertos",

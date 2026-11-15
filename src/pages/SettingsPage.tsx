@@ -9,6 +9,7 @@ import { useOffline } from '../lib/connectivity'
 import { useFollowingState } from '../lib/followingState'
 import { supabase } from '../lib/supabase'
 import { useProfile, useUpdateProfile } from '../profile/useProfile'
+import { clearPhotoCaches } from '../data/photos'
 import { forgetThisDevice } from '../push/push'
 
 function ProfileForm({ initialName }: { initialName: string }) {
@@ -65,6 +66,7 @@ export function SettingsPage() {
   async function signOut() {
     // Los avisos de esta cuenta dejan de llegar a este móvil.
     await forgetThisDevice()
+    await clearPhotoCaches()
     await supabase.auth.signOut({ scope: 'local' })
   }
 

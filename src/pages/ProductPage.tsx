@@ -2,15 +2,19 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { PencilIcon } from '../components/icons'
+import { PhotoCarousel } from '../components/PhotoCarousel'
+import { PhotoSheet } from '../components/PhotoSheet'
+import { ProductPhoto } from '../components/ProductPhoto'
 import { Screen, topBarIcon } from '../components/Screen'
 import { ShelfLifeChip } from '../components/ShelfLifeChip'
 import { StatusBadge } from '../components/StatusBadge'
-import { ActionChip, Button, Card, FullScreenLoader, LoadError, Message, TextAreaField, TextField, buttonClass } from '../components/ui'
+import { ActionChip, Button, Card, FullScreenLoader, LoadError, Message, TextAreaField, TextField, buttonClass, focusRing } from '../components/ui'
 import { useCatalog } from '../data/catalog'
 import { useDateContext } from '../data/context'
 import { useInventory, useInventoryAction } from '../data/inventory'
 import { formatDate, formatDayMonth } from '../domain/dates'
 import { productIcon, productName, type Lot, type OpenedUnit, type Product, type Zone } from '../domain/inventory'
+import { brandPhotos } from '../domain/photos'
 import { formatPercent, formatNumber, formatQuantity, summarize, totalContent } from '../domain/quantity'
 import { statusOf, type RowDate } from '../domain/status'
 import type { ZoneKind } from '../domain/types'
@@ -40,6 +44,8 @@ type SheetState =
   | { type: 'discard'; lot: Lot }
   | { type: 'edit'; lot: Lot }
   | { type: 'barcode'; lot: Lot }
+  | { type: 'lotPhoto'; lot: Lot }
+  | { type: 'productPhoto' }
   | { type: 'exact'; unit: OpenedUnit }
   | { type: 'unitDates'; unit: OpenedUnit }
   | { type: 'rename' }
@@ -168,10 +174,13 @@ function LotCard({
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3">
       <div className="flex flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-semibold text-ink-muted">{t(`zones.${zoneKind}`)}</span>
-          {lot.quantity > 0 && <span className="font-semibold">{formatQuantity(lot.quantity, product, t, tag)}</span>}
-          {lot.brand && <span className="text-sm text-ink-muted">{lot.brand}</span>}
+        <div className="flex items-start gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-semibold text-ink-muted">{t(`zones.${zoneKind}`)}</span>
+            {lot.quantity > 0 && <span className="font-semibold">{formatQuantity(lot.quantity, product, t, tag)}</span>}
+            {lot.brand && <span className="text-sm text-ink-muted">{lot.brand}</span>}
+          </div>
+          <ProductPhoto src={lot.image_url} className="size-12 rounded-lg border border-line" />
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
           {isFrozen && <span>{t('inventory.frozenSince', { date: formatDayMonth(lot.frozen_at!) })}</span>}
@@ -219,6 +228,9 @@ function LotCard({
             {lot.barcode ? t('product.actions.changeBarcode') : t('product.actions.assignBarcode')}
           </ActionChip>
         )}
+        <ActionChip disabled={pending} onClick={() => onOpenSheet({ type: 'lotPhoto', lot })}>
+          {t('product.actions.photo')}
+        </ActionChip>
       </div>
     </div>
   )
@@ -277,6 +289,7 @@ export function ProductPage() {
   const inventory = useInventory()
   const catalog = useCatalog()
   const { run, pending } = useInventoryAction()
+  const productUpdate = useProductUpdate()
   const offline = useOffline()
   const [sheet, setSheet] = useState<SheetState | null>(null)
 
@@ -318,6 +331,13 @@ export function ProductPage() {
   const content = hasStock ? totalContent(product, lots, units, t, tag) : null
   const canOpenAny = !isDish && !isBulk && lots.some((lot) => lot.quantity > 0 && !lot.opened_at)
   const number = lots.find((lot) => lot.container_number !== null)?.container_number
+  const photos = brandPhotos(lots, product)
+
+  /** Guarda la foto de un lote. Si falla, la hoja de la foto lo dice y sigue abierta. */
+  async function saveLotPhoto(lot: Lot, ref: string | null) {
+    const done = await run('edited', () => supabase.rpc('update_lot', { p_lot_id: lot.id, p_patch: { image_url: ref } }))
+    if (!done) throw new Error('unknown')
+  }
 
   // "Asignar código" (SPEC §11): guarda el código y, si el lote no los tiene, la foto y la marca.
   function assignBarcode(lot: Lot, { scanned }: BarcodeResult) {
@@ -352,6 +372,19 @@ export function ProductPage() {
         const lot = sheet.lot
         return <ScanBarcodeDialog houseId={lot.house_id} house={inventory.data!} onResult={(result) => assignBarcode(lot, result)} onClose={close} />
       }
+      case 'lotPhoto': {
+        const lot = sheet.lot
+        return <PhotoSheet title={t('photo.titleLot')} current={lot.image_url} onSave={(ref) => saveLotPhoto(lot, ref)} onClose={close} />
+      }
+      case 'productPhoto':
+        return (
+          <PhotoSheet
+            title={t('photo.titleProduct')}
+            current={product.image_url}
+            onSave={(ref) => productUpdate.mutateAsync({ id: product.id, patch: { image_url: ref } })}
+            onClose={close}
+          />
+        )
       case 'exact':
         return <ExactRemainingSheet product={product} unit={sheet.unit} onClose={close} />
       case 'unitDates':
@@ -374,10 +407,13 @@ export function ProductPage() {
       }
       main={
         <div className="flex flex-col gap-5">
+          {photos.length > 0 && <PhotoCarousel photos={photos} icon={icon} />}
           <section className="flex items-center gap-4">
-            <span aria-hidden="true" className="text-5xl leading-none">
-              {icon}
-            </span>
+            {photos.length === 0 && (
+              <span aria-hidden="true" className="text-5xl leading-none">
+                {icon}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               {number !== undefined && number !== null && (
                 <p className="font-bold text-brand">{t('inventory.containerNumber', { number })}</p>
@@ -386,6 +422,14 @@ export function ProductPage() {
               {hasStock && <p className="text-lg font-semibold">{total}</p>}
               {content && <p className="text-sm text-ink-muted">{t('product.totalContent', { amount: content })}</p>}
             </div>
+            <button
+              type="button"
+              disabled={offline}
+              onClick={() => setSheet({ type: 'productPhoto' })}
+              className={`min-h-10 shrink-0 self-start px-1 text-sm font-semibold text-brand disabled:opacity-40 ${focusRing}`}
+            >
+              {product.image_url ? t('product.changePhoto') : t('product.addPhoto')}
+            </button>
           </section>
 
           {hasStock ? (

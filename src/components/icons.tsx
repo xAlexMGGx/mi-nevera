@@ -69,6 +69,28 @@ export function ListIcon() {
   )
 }
 
+/** Tarjetas en dos columnas. */
+export function GridIcon() {
+  return (
+    <svg {...shared} width={20} height={20}>
+      <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
+    </svg>
+  )
+}
+
+/** Tarjetas en una columna. */
+export function CardIcon() {
+  return (
+    <svg {...shared} width={20} height={20}>
+      <rect x="3" y="3" width="18" height="12" rx="2" />
+      <path d="M3 19h18" />
+    </svg>
+  )
+}
+
 export function ChevronIcon() {
   return (
     <svg {...shared} width={20} height={20}>
