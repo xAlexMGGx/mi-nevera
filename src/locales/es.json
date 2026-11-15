@@ -328,7 +328,14 @@
     "scan": "Escanear código de barras",
     "scanToFill": "Escanear código de barras",
     "pickProduct": "Elige el producto entre los de tu casa o del catálogo, o créalo con su nombre.",
-    "remove": "Quitar el código"
+    "remove": "Quitar el código",
+    "identifying": "Identificando el producto…",
+    "inHouse": "Ya lo tienes en casa",
+    "fromCatalog": "Del catálogo",
+    "newProduct": "Producto nuevo: podrás cambiarle el nombre",
+    "original": "En Open Food Facts: «{{name}}»",
+    "notIdentified": "No se ha podido identificar con IA:",
+    "pickOther": "Elegir otro producto"
   },
   "camera": {
     "starting": "Abriendo la cámara…",
@@ -399,8 +406,6 @@
     "editLine": "Editar {{name}}",
     "fromAlias": "Emparejado como en tickets anteriores",
     "newProduct": "Producto nuevo: se creará al añadir",
-    "existingProduct": "Se añadirá a este producto",
-    "newProductHint": "Este producto se creará en la casa.",
     "pickProduct": "Elegir producto",
     "line": "Línea del ticket",
     "onReceipt": "En el ticket: «{{text}}»",
@@ -416,7 +421,6 @@
   },
   "form": {
     "category": "Categoría",
-    "quantityKind": "Cómo se cuenta",
     "unit": "Unidad",
     "contentAmount": "Contenido de cada uno",
     "contentUnit": "Medida",
@@ -428,8 +432,6 @@
     "frozenAt": "Congelado desde",
     "reminder": "Fecha de aviso (opcional)",
     "reminderHint": "Sirve para recordar cuándo consumirlo.",
-    "moreDetails": "Más detalles",
-    "countedAs": "Se cuenta por: {{what}}",
     "containerOf": "{{unit}} de {{amount}} {{measure}}",
     "brand": "Marca",
     "purchasedAt": "Fecha de compra",
@@ -438,7 +440,18 @@
       "quantity": "Indica una cantidad mayor que cero.",
       "content": "Indica cuánto contiene cada uno.",
       "dateType": "Indica si es de caducidad o de consumo preferente."
-    }
+    },
+    "byUnits": "Por unidades",
+    "byWeight": "Por peso o volumen",
+    "eachContains": "Cada {{unit}} contiene",
+    "eachContainsHint": "Opcional. Con contenido, podrás abrir uno y apuntar cuánto queda."
+  },
+  "lot": {
+    "inHouse": "Producto de tu casa",
+    "fromCatalog": "Del catálogo: se añadirá a tu casa",
+    "newProduct": "Producto nuevo",
+    "name": "Nombre",
+    "countedLikeThis": "Así se cuenta este producto en tu casa."
   },
   "leftover": {
     "title": "Añadir táper",

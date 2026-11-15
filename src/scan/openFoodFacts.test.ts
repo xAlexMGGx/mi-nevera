@@ -39,6 +39,8 @@ describe('producto de Open Food Facts', () => {
     expect(toScannedProduct('3017624010701', product, 'es')).toEqual({
       barcode: '3017624010701',
       name: 'Crema de cacao Nutella',
+      names: ['Crema de cacao Nutella', 'Nutella'],
+      categories: [],
       brand: 'Ferrero',
       quantityText: '400.0 g',
       contentAmount: 400,
@@ -52,12 +54,19 @@ describe('producto de Open Food Facts', () => {
     expect(toScannedProduct('8410000000001', null, 'es')).toEqual({
       barcode: '8410000000001',
       name: null,
+      names: [],
+      categories: [],
       brand: null,
       quantityText: null,
       contentAmount: null,
       contentUnit: null,
       imageUrl: null,
     })
+  })
+
+  it('sin nombre en español, guarda los de otros idiomas y las categorías para identificarlo', () => {
+    const scanned = toScannedProduct('3083681149630', { product_name: 'Haricots verts extra-fins', categories_tags: ['en:green-beans', 'en:frozen-vegetables', 3] }, 'es')
+    expect(scanned).toMatchObject({ name: 'Haricots verts extra-fins', names: ['Haricots verts extra-fins'], categories: ['en:green-beans', 'en:frozen-vegetables'] })
   })
 
   it('descarta fotos que no van por https y textos vacíos', () => {

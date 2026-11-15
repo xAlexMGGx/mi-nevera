@@ -16,27 +16,14 @@ import { formatDate } from '../../domain/dates'
 import type { InventoryData } from '../../domain/inventory'
 import { learnedDate, type DateSample } from '../../domain/learnedDates'
 import { formatQuantity } from '../../domain/quantity'
-import {
-  applyPayload,
-  chainQueue,
-  lineCounting,
-  lineProblem,
-  manualLine,
-  moveDraftToHouse,
-  removeLine,
-  retargetLine,
-  splitLine,
-  updateLine,
-  type DraftLine,
-  type TicketDraft,
-} from '../../domain/ticket'
+import { emptyLine, lineCounting, lineLabel, lineProblem, targetFromSelection, type DraftLine } from '../../domain/lotDraft'
+import { applyPayload, chainQueue, moveDraftToHouse, removeLine, splitLine, updateLine, type TicketDraft } from '../../domain/ticket'
 import type { Json } from '../../lib/database.types'
 import { errorKey as errorKeyOf } from '../../lib/errors'
 import { useOffline } from '../../lib/connectivity'
 import { supabase } from '../../lib/supabase'
 import { ReadDateDialog } from '../../scan/ReadDateDialog'
 import { LineSheet, ProductPickerSheet } from './LineSheet'
-import { lineLabel, selectionToTarget } from './lineView'
 
 interface TicketPreviewProps {
   draft: TicketDraft
@@ -63,8 +50,8 @@ function LineCard({ line, house, samples, purchasedAt, onToggle, onDate, onEdit 
   const { language, tag, today } = useDateContext()
   const catalog = useCatalog()
   const { name, icon } = lineLabel(line.target, house.products, catalog.byId, language)
-  const counting = lineCounting(line.target, house.products, catalog.byId)
-  const problem = line.checked ? lineProblem(line, counting) : null
+  const counting = lineCounting(line.target, house.products)
+  const problem = line.checked ? lineProblem(line, house.products) : null
   const learned = line.checked && !line.printedDate ? lineLearned(line, samples, purchasedAt) : null
   const details = [formatQuantity(line.quantity, counting, t, tag), t(`zones.${line.zone}`), line.brand.trim()].filter(Boolean).join(' · ')
 
@@ -144,7 +131,7 @@ export function TicketPreview({ draft, update, onFinished }: TicketPreviewProps)
   const house = inventory.data
   const sampleRows = samples.data ?? []
   const checked = draft.lines.filter((line) => line.checked)
-  const problems = checked.filter((line) => lineProblem(line, lineCounting(line.target, house.products, catalog.byId)))
+  const problems = checked.filter((line) => lineProblem(line, house.products))
   const queue = chainQueue(draft)
   const editingLine = draft.lines.find((line) => line.key === editing)
   const nameOf = (line: DraftLine) => lineLabel(line.target, house.products, catalog.byId, language).name
@@ -251,14 +238,12 @@ export function TicketPreview({ draft, update, onFinished }: TicketPreviewProps)
             <LineSheet
               key={editingLine.key}
               line={editingLine}
+              houseId={draft.houseId}
               house={house}
               learned={lineLearned(editingLine, sampleRows, draft.purchasedAt)}
-              onChange={(patch) => update((current) => updateLine(current, editingLine.key, patch))}
-              onRetarget={(target) =>
-                update((current) => {
-                  const line = current.lines.find((row) => row.key === editingLine.key)
-                  return line ? updateLine(current, line.key, retargetLine(line, target, house, catalog.byId)) : current
-                })
+              purchasedAt={draft.purchasedAt}
+              update={(change) =>
+                update((current) => ({ ...current, lines: current.lines.map((line) => (line.key === editingLine.key ? change(line) : line)) }))
               }
               onSplit={() => update((current) => splitLine(current, editingLine.key))}
               onRemove={() => {
@@ -275,7 +260,7 @@ export function TicketPreview({ draft, update, onFinished }: TicketPreviewProps)
               title={t('ticket.addLine')}
               onClose={() => setAdding(false)}
               onPick={(selection) => {
-                const line = manualLine(selectionToTarget(selection, { type: 'new', name: '', category: 'other', quantityKind: 'count', unitLabel: 'unit', contentAmount: null, contentUnit: null, bulkUnit: null }, house.products, catalog.byId), house, catalog.byId)
+                const line = emptyLine(targetFromSelection(selection, null, house.products), house, catalog.byId)
                 update((current) => ({ ...current, lines: [...current.lines, line] }))
                 setAdding(false)
                 setEditing(line.key)

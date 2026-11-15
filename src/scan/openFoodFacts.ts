@@ -14,12 +14,17 @@ const fields = [
   'quantity',
   'image_front_url',
   'image_url',
+  'categories_tags',
 ].join(',')
 
 export interface ScannedProduct {
   barcode: string
   /** Lo que se sabe del producto. Sin resultado, solo hay código. */
   name: string | null
+  /** Todos los nombres que tiene, en cualquier idioma: el de la persona primero. */
+  names: string[]
+  /** Etiquetas de categoría ("en:green-beans"), que entiende cualquiera. */
+  categories: string[]
   brand: string | null
   /** "1 l", "400 g", tal cual lo da Open Food Facts. */
   quantityText: string | null
@@ -38,6 +43,7 @@ interface OffProduct {
   quantity?: string
   image_front_url?: string
   image_url?: string
+  categories_tags?: unknown
 }
 
 /** EAN-8, EAN-13, UPC-A y UPC-E: solo cifras. */
@@ -86,12 +92,16 @@ export function toScannedProduct(barcode: string, product: OffProduct | null, la
     language === 'en'
       ? [product?.product_name_en, product?.product_name, product?.product_name_es]
       : [product?.product_name_es, product?.product_name, product?.product_name_en]
-  const name = [...names, product?.generic_name_es, product?.generic_name].map(text).find(Boolean) ?? null
+  const all = [...new Set([...names, product?.generic_name_es, product?.generic_name].flatMap((value) => text(value) ?? []))]
+  const name = all[0] ?? null
   const quantityText = text(product?.quantity)
   const quantity = parseQuantity(quantityText)
+  const categories = Array.isArray(product?.categories_tags) ? product.categories_tags.filter((tag): tag is string => typeof tag === 'string').slice(0, 12) : []
   return {
     barcode,
     name: name ? name.slice(0, 80) : null,
+    names: all.slice(0, 6),
+    categories,
     brand: text(product?.brands?.split(',')[0])?.slice(0, 80) ?? null,
     quantityText,
     contentAmount: quantity?.amount ?? null,

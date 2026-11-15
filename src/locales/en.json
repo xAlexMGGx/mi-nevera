@@ -328,7 +328,14 @@
     "scan": "Scan barcode",
     "scanToFill": "Scan barcode",
     "pickProduct": "Choose the product from your home or the catalog, or create it by name.",
-    "remove": "Remove barcode"
+    "remove": "Remove barcode",
+    "identifying": "Identifying the product…",
+    "inHouse": "Already in your home",
+    "fromCatalog": "From the catalog",
+    "newProduct": "New product: you can rename it",
+    "original": "On Open Food Facts: “{{name}}”",
+    "notIdentified": "It couldn't be identified with AI:",
+    "pickOther": "Choose another product"
   },
   "camera": {
     "starting": "Opening the camera…",
@@ -399,8 +406,6 @@
     "editLine": "Edit {{name}}",
     "fromAlias": "Matched as on previous receipts",
     "newProduct": "New product: it will be created when adding",
-    "existingProduct": "It will be added to this product",
-    "newProductHint": "This product will be created in the home.",
     "pickProduct": "Choose product",
     "line": "Receipt line",
     "onReceipt": "On the receipt: “{{text}}”",
@@ -416,7 +421,6 @@
   },
   "form": {
     "category": "Category",
-    "quantityKind": "How it's counted",
     "unit": "Unit",
     "contentAmount": "Contents of each",
     "contentUnit": "Measure",
@@ -428,8 +432,6 @@
     "frozenAt": "Frozen since",
     "reminder": "Reminder date (optional)",
     "reminderHint": "Helps you remember when to eat it.",
-    "moreDetails": "More details",
-    "countedAs": "Counted by: {{what}}",
     "containerOf": "{{amount}} {{measure}} {{unit}}",
     "brand": "Brand",
     "purchasedAt": "Purchase date",
@@ -438,7 +440,18 @@
       "quantity": "Enter a quantity greater than zero.",
       "content": "Enter how much each one contains.",
       "dateType": "Say whether it's a use-by or a best-before date."
-    }
+    },
+    "byUnits": "By units",
+    "byWeight": "By weight or volume",
+    "eachContains": "Each {{unit}} holds",
+    "eachContainsHint": "Optional. With it, you can open one and note how much is left."
+  },
+  "lot": {
+    "inHouse": "Product from your home",
+    "fromCatalog": "From the catalog: it will be added to your home",
+    "newProduct": "New product",
+    "name": "Name",
+    "countedLikeThis": "This is how this product is counted in your home."
   },
   "leftover": {
     "title": "Add leftovers",

@@ -18,7 +18,7 @@ import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
 import { useFollowingState } from '../lib/followingState'
 import { supabase } from '../lib/supabase'
-import type { ScannedProduct } from '../scan/openFoodFacts'
+import type { BarcodeResult } from '../scan/identify'
 import { ScanBarcodeDialog } from '../scan/ScanBarcodeDialog'
 import {
   AdjustSheet,
@@ -320,7 +320,7 @@ export function ProductPage() {
   const number = lots.find((lot) => lot.container_number !== null)?.container_number
 
   // "Asignar código" (SPEC §11): guarda el código y, si el lote no los tiene, la foto y la marca.
-  function assignBarcode(lot: Lot, scanned: ScannedProduct) {
+  function assignBarcode(lot: Lot, { scanned }: BarcodeResult) {
     setSheet(null)
     void run('edited', () =>
       supabase.rpc('update_lot', {
@@ -350,7 +350,7 @@ export function ProductPage() {
         return <EditLotSheet product={product} name={name} lot={sheet.lot} onClose={close} />
       case 'barcode': {
         const lot = sheet.lot
-        return <ScanBarcodeDialog onResult={(scanned) => assignBarcode(lot, scanned)} onClose={close} />
+        return <ScanBarcodeDialog houseId={lot.house_id} house={inventory.data!} onResult={(result) => assignBarcode(lot, result)} onClose={close} />
       }
       case 'exact':
         return <ExactRemainingSheet product={product} unit={sheet.unit} onClose={close} />

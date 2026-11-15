@@ -2,48 +2,69 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProductPhoto } from '../components/ProductPhoto'
 import { Button, focusRing } from '../components/ui'
+import { useCatalog } from '../data/catalog'
+import { productName, type InventoryData } from '../domain/inventory'
 import { CameraDialog, CameraFrame } from './CameraDialog'
-import { cleanBarcode, lookUpBarcode, toScannedProduct, type ScannedProduct } from './openFoodFacts'
+import { resolveBarcode, type BarcodeResult, type ResolveStage } from './identify'
+import { cleanBarcode } from './openFoodFacts'
 import { cameraErrorStatus, rearCamera, type CameraStatus } from './useCamera'
 
 interface ScanBarcodeDialogProps {
-  onResult: (product: ScannedProduct) => void
+  houseId: string
+  house: InventoryData
+  /** Identificar el producto con la IA si la casa no conoce el código: desde ＋ y desde Añadir. */
+  identify?: boolean
+  onResult: (result: BarcodeResult) => void
+  /** "Elegir otro producto": lo propuesto no es, y se elige en el buscador con el código ya leído. */
+  onPickOther?: (result: BarcodeResult) => void
   onClose: () => void
 }
 
-type Phase = { type: 'scan' } | { type: 'lookup'; barcode: string } | { type: 'result'; product: ScannedProduct; offline: boolean }
+type Phase = { type: 'scan' } | { type: 'resolving'; barcode: string; stage: ResolveStage } | { type: 'result'; result: BarcodeResult }
 
-/** Lee el código con la cámara, lo busca en Open Food Facts y enseña lo encontrado (SPEC §11). */
-export function ScanBarcodeDialog({ onResult, onClose }: ScanBarcodeDialogProps) {
+/** Lee el código, averigua qué producto es y lo enseña para confirmarlo (SPEC §11). */
+export function ScanBarcodeDialog({ houseId, house, identify = false, onResult, onPickOther, onClose }: ScanBarcodeDialogProps) {
   const { t, i18n } = useTranslation()
   const [phase, setPhase] = useState<Phase>({ type: 'scan' })
   const language = i18n.resolvedLanguage ?? 'es'
+  const barcode = phase.type === 'resolving' ? phase.barcode : null
 
   useEffect(() => {
-    if (phase.type !== 'lookup') return
+    if (!barcode) return
     const controller = new AbortController()
-    lookUpBarcode(phase.barcode, language, controller.signal)
-      .then((product) => setPhase({ type: 'result', product, offline: false }))
-      .catch(() => {
-        // Sin Open Food Facts también vale: el código se guarda y el resto se rellena a mano.
-        if (!controller.signal.aborted) setPhase({ type: 'result', product: toScannedProduct(phase.barcode, null, language), offline: true })
-      })
+    resolveBarcode(barcode, {
+      houseId,
+      house,
+      language,
+      identify,
+      signal: controller.signal,
+      onStage: (stage) => setPhase({ type: 'resolving', barcode, stage }),
+    }).then(
+      (result) => setPhase({ type: 'result', result }),
+      () => {
+        // Se ha cerrado o se ha vuelto a escanear: no hay nada que enseñar.
+      },
+    )
     return () => controller.abort()
-  }, [phase, language])
+    // Solo al leer un código nuevo; los datos de la casa no cambian mientras tanto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [barcode])
 
   return (
     <CameraDialog title={t('barcode.title')} onClose={onClose}>
-      {phase.type === 'scan' && <Scanner onCode={(barcode) => setPhase({ type: 'lookup', barcode })} />}
-      {phase.type === 'lookup' && (
-        <p role="status" className="flex flex-1 items-center justify-center text-white/80">
-          {t('barcode.lookingUp', { code: phase.barcode })}
+      {phase.type === 'scan' && <Scanner onCode={(code) => setPhase({ type: 'resolving', barcode: code, stage: 'looking' })} />}
+      {phase.type === 'resolving' && (
+        <p role="status" className="flex flex-1 items-center justify-center text-center text-white/80">
+          {phase.stage === 'identifying' ? t('barcode.identifying') : t('barcode.lookingUp', { code: phase.barcode })}
         </p>
       )}
       {phase.type === 'result' && (
         <ScanResult
-          product={phase.product}
-          offline={phase.offline}
-          onUse={() => onResult(phase.product)}
+          result={phase.result}
+          house={house}
+          identify={identify}
+          onUse={() => onResult(phase.result)}
+          onPickOther={onPickOther ? () => onPickOther(phase.result) : undefined}
           onAgain={() => setPhase({ type: 'scan' })}
         />
       )}
@@ -76,7 +97,8 @@ function Scanner({ onCode }: { onCode: (barcode: string) => void }) {
       const reader = new BrowserMultiFormatOneDReader(hints)
       const controls = await reader.decodeFromConstraints(rearCamera, video, (result) => {
         const barcode = result ? cleanBarcode(result.getText()) : null
-        if (!barcode || found) return
+        // Una lectura que llega tarde, cuando ya se ha escrito otro código a mano, no cuenta.
+        if (!barcode || found || cancelled) return
         found = true
         stop?.()
         onCodeRef.current(barcode)
@@ -142,34 +164,68 @@ function Scanner({ onCode }: { onCode: (barcode: string) => void }) {
   )
 }
 
-function ScanResult({ product, offline, onUse, onAgain }: { product: ScannedProduct; offline: boolean; onUse: () => void; onAgain: () => void }) {
-  const { t } = useTranslation()
-  const found = Boolean(product.name)
+interface ScanResultProps {
+  result: BarcodeResult
+  house: InventoryData
+  identify: boolean
+  onUse: () => void
+  onPickOther?: () => void
+  onAgain: () => void
+}
+
+function ScanResult({ result, house, identify, onUse, onPickOther, onAgain }: ScanResultProps) {
+  const { t, i18n } = useTranslation()
+  const catalog = useCatalog()
+  const language = i18n.resolvedLanguage ?? 'es'
+  const { scanned, proposal } = result
+
+  const product = result.productId ? house.products.find((row) => row.id === result.productId) : undefined
+  const catalogItem = !product && proposal?.catalog_item_id ? catalog.byId.get(proposal.catalog_item_id) : undefined
+  const title = product
+    ? productName(product, catalog.byId, language)
+    : catalogItem
+      ? language === 'en' ? catalogItem.name_en : catalogItem.name_es
+      : (proposal?.name ?? scanned.name)
+  const kind = product ? t('barcode.inHouse') : catalogItem ? t('barcode.fromCatalog') : proposal ? t('barcode.newProduct') : null
+  const original = result.source !== 'house' && scanned.name && scanned.name !== title ? scanned.name : null
+  const found = Boolean(title)
+
   return (
     <div className="flex flex-1 flex-col justify-end gap-3">
       <div className="flex flex-col gap-3 rounded-2xl bg-surface p-4 text-ink">
         <div className="flex items-start gap-3">
-          <ProductPhoto src={product.imageUrl} className="size-20 rounded-xl" />
+          <ProductPhoto src={scanned.imageUrl} className="size-20 rounded-xl" />
           <div className="min-w-0 flex-1">
             {found ? (
               <>
-                <p className="text-lg font-bold">{product.name}</p>
-                {product.brand && <p className="text-ink-muted">{product.brand}</p>}
-                {product.quantityText && <p className="text-sm text-ink-muted">{product.quantityText}</p>}
+                <p className="text-lg font-bold">{title}</p>
+                {kind && <p className="text-sm font-semibold text-brand">{kind}</p>}
+                {(scanned.brand || scanned.quantityText) && <p className="text-ink-muted">{[scanned.brand, scanned.quantityText].filter(Boolean).join(' · ')}</p>}
+                {original && <p className="text-sm text-ink-muted">{t('barcode.original', { name: original })}</p>}
               </>
             ) : (
-              <p className="font-semibold">{offline ? t('barcode.offline') : t('barcode.notFound')}</p>
+              <p className="font-semibold">{result.offline ? t('barcode.offline') : t('barcode.notFound')}</p>
             )}
-            <p className="mt-1 text-xs text-ink-muted">{t('barcode.code', { code: product.barcode })}</p>
+            <p className="mt-1 text-xs text-ink-muted">{t('barcode.code', { code: scanned.barcode })}</p>
           </div>
         </div>
         {!found && <p className="text-sm text-ink-muted">{t('barcode.fillByHand')}</p>}
+        {identify && result.aiError && (
+          <p className="text-sm text-ink-muted">
+            {t('barcode.notIdentified')} {t(result.aiError)}
+          </p>
+        )}
         <Button onClick={onUse}>{found ? t('barcode.use') : t('barcode.useCode')}</Button>
+        {onPickOther && found && (
+          <Button variant="secondary" onClick={onPickOther}>
+            {t('barcode.pickOther')}
+          </Button>
+        )}
         <Button variant="secondary" onClick={onAgain}>
           {t('barcode.again')}
         </Button>
       </div>
-      {found && <p className="text-center text-xs text-white/60">{t('barcode.source')}</p>}
+      {result.source !== 'house' && scanned.name && <p className="text-center text-xs text-white/60">{t('barcode.source')}</p>}
     </div>
   )
 }

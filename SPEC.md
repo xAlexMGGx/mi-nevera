@@ -119,6 +119,7 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 - **`opened_units`** (solo `divisible`): `lot_id`, `remaining_fraction` (0–1), `opened_at`, `reminder_date` (nullable).
 - **`date_samples`**: `house_id`, `product_id`, `days_to_printed_date` (int), `printed_date_type`, `created_at`. Se inserta al crear un lote con `printed_date` y `purchased_at`. Sirve para sugerir fechas aprendidas (§7.4). Sobrevive aunque el lote se consuma.
 - **`ticket_aliases`**: `house_id`, `raw_text_normalized`, `product_id`, `brand`. Recuerda que "LECHE SEMI HACEND 1L" = Leche (Hacendado).
+- **`product_barcodes`** (fase 4): `house_id`, `barcode`, `product_id`, `brand`, `image_url`. Recuerda a qué producto de la casa corresponde cada código, aunque el lote se acabe. Se apunta solo (trigger) cada vez que se guarda un lote con código: a mano, con un ticket, al asignarlo o al llegar de otra casa. No forma parte de Deshacer.
 
 ### 5.4 Historial
 
@@ -132,7 +133,7 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 - **`push_subscriptions`** (fase 3): `user_id`, `endpoint`, `p256dh`, `auth`, `user_agent`. Una por móvil. Si en el móvil entra otra cuenta, la suscripción pasa a ella.
 - **`shelf_life_guide`** (fase 3): `catalog_item_id` o `category`, `state` (`opened`|`frozen`|`thawed`|`cooked`|`closed_fridge`|`closed_pantry`), `min_days`, `max_days`, `note_es`, `note_en`, `source`. Sin días, la fuente desaconseja ese estado (por ejemplo, congelar huevos con cáscara). Se genera a partir de `src/content/conservation/shelf-life.json`.
 - **`private.digest_log`** (fase 3): `user_id`, `house_id`, `day`. Lo ya avisado, para no repetir el aviso diario.
-- **`private.ai_usage`** (fase 4): `user_id`, `day`, `kind` (`receipt`|`date`), `count`. Lecturas con IA de cada persona y día, para el límite diario (20 tickets y 150 fechas).
+- **`private.ai_usage`** (fase 4): `user_id`, `day`, `kind` (`receipt`|`date`|`product`), `count`. Lecturas con IA de cada persona y día, para el límite diario (20 tickets, 150 fechas y 100 códigos nuevos).
 - **`shopping_items`** (fase 6): `house_id`, `product_id` (nullable), `name`, `quantity_text`, `preferred_brand`, `checked`, `origin` (`manual`|`finished`|`recipe`).
 - **`recipe_favorites`** (fase 7): `user_id`, `house_id`, `title`, `recipe jsonb`.
 - **`recipe_blocked`** (fase 7): `user_id`, `title_normalized`.
@@ -164,7 +165,7 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | `update_product(product_id, ...)` / `delete_product(product_id)` | Editan nombre, categoría, marca preferida y notas, o borran un producto sin existencias. No cambian el inventario, así que no registran movimiento |
 | `apply_ticket(house_id, lines, purchased_at?, store?)` | Aplica las líneas confirmadas de la preview y guarda alias. Todas en una sola operación, con un único movimiento `ticket_applied` que se deshace entero (alias incluidos) |
 | `match_ticket_lines(house_id, raw_texts)` | Las líneas de ticket que la casa ya conoce por sus alias. La usa `parse-receipt`. No registra movimiento |
-| `claim_ai_use(kind)` | Cuenta una lectura con IA de quien llama y dice si cabe en su límite del día. La usan `parse-receipt` y `read-date` |
+| `claim_ai_use(kind)` | Cuenta una lectura con IA de quien llama y dice si cabe en su límite del día. La usan `parse-receipt`, `read-date` y `match-product` |
 | `cook_recipe(payload)` | Aplica los descuentos confirmados y, opcionalmente, crea táper |
 | `undo_movement(movement_id)` | Restaura el estado previo guardado en `undo_state`. Solo movimientos de los últimos 2 minutos. Se rechaza si un movimiento posterior tocó los mismos lotes, para no pisar el cambio de otra persona. Si se deshace, el movimiento desaparece del historial. Un movimiento entre casas se deshace desde su salida (`moved_out`), que deshace también la entrada |
 | `create_invite(house_id)` / `revoke_invite(invite_id)` | Crean o anulan una invitación. Solo el propietario. No registran movimiento |
@@ -225,6 +226,12 @@ Al eliminar la cuenta: las casas donde el usuario es el único miembro se borran
 4. Fecha impresa + tipo (caducidad / consumo preferente). **Vacía**, con chip aprendido si existe (§7.4) y botón **"Leer fecha con la cámara"** (fase 4, §10.2). Si se indica fecha, el tipo es obligatorio y no viene preseleccionado.
 5. Marca (opcional, plegada bajo "Más detalles").
 6. Botón "Escanear código de barras" para autocompletar (fase 4).
+
+**Desde la fase 4, un único formulario** para añadir a mano, por código de barras y en cada línea del ticket; lo escaneado solo rellena campos:
+- Cantidad con la unidad al lado: "6 [bricks ▾]", y debajo "Cada brick contiene [1] [l]". Con contenido, se gasta poco a poco (`divisible`); sin él, se cuenta entero (`count`); con kg, g, l o ml, a granel (`bulk`). Desaparece el selector "Cómo se cuenta".
+- Un producto de la casa enseña cómo se cuenta, pero no se cambia aquí, para no mezclar cantidades (§7.5). Uno del catálogo empieza con sus valores y se pueden cambiar; uno nuevo lleva además nombre y categoría.
+- Zona con botones, y en el Congelador, fecha de congelado (por defecto, la de compra), chip orientativo y fecha de aviso, también en el ticket.
+- Fecha impresa, marca y código de barras a la vista. Ya no hay "Más detalles": la fecha de compra va al final en el alta y, en el ticket, es la del ticket.
 
 Para tápers: nombre libre, raciones, fecha de cocinado (hoy por defecto), zona, **número de recipiente** (asignado automáticamente, con el texto "Escríbelo en la tapa") y chip orientativo de fecha de aviso (fase 3). Cada táper es una fila propia del inventario; mover solo una parte crea otro táper con un número nuevo.
 
@@ -410,8 +417,15 @@ Para completar las fechas de un ticket sin ir línea a línea a mano:
 - Guardar `barcode` e `image_url` en el lote.
 - Disponible desde: alta manual, preview del ticket y detalle de lote ("Asignar código").
 - Open Food Facts se consulta desde el móvil (API v2, solo los campos necesarios), identificándose con la cabecera `X-User-Agent`, porque el navegador no deja cambiar el `User-Agent`. Así su límite de lecturas por minuto es el de cada persona y no el compartido de los servidores de Supabase.
-- Si la casa ya tiene un lote con ese código, se elige ese producto directamente. Si no, se busca por el nombre de Open Food Facts; un producto nuevo empieza con su marca y el contenido del envase ("400 g").
 - Solo EAN-13, EAN-8, UPC-A y UPC-E. El código también se puede escribir a mano.
+
+**Identificar el producto (fase 4, a petición del propietario):** Open Food Facts suele dar el nombre en otro idioma ("Haricots verts extra-fins"). Al escanear desde ＋ o desde Añadir:
+1. Si la casa ya conoce el código (`product_barcodes`), es ese producto. Sin Open Food Facts ni IA.
+2. Si no, lo que dice Open Food Facts (nombres en todos los idiomas, marca, cantidad y categorías) va a la Edge Function `match-product`. Con Claude, lo empareja con un producto de la casa o del catálogo ("Judías verdes") o propone uno nuevo con un nombre genérico en español, su categoría, su forma de contar y su zona. Respuesta validada con Zod; el catálogo va en caché para que escanear varios seguidos sea más barato.
+3. Se enseña para confirmar: "Usar este producto" abre el formulario de §6.3 ya rellenado, con el nombre de un producto nuevo editable. "Elegir otro producto" abre el buscador con el código ya leído.
+4. Sin datos en Open Food Facts, o si la IA falla, se elige en el buscador como antes; el código se guarda igual.
+
+Al asignar un código a un lote o a una línea del ticket, el producto ya está elegido: solo se recuerda el código (y, si la casa ya lo conocía, se usa su producto).
 
 ---
 
@@ -570,7 +584,7 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 4 · Ticket y código de barras. Código terminado, pendiente de aplicar la migración, activar la lectura con IA (`SETUP.md`, paso 13), desplegar y confirmar en el iPhone con un ticket real.
+**Fase actual:** 4 · Ticket y código de barras. El propietario ha probado la primera parte con `claude-sonnet-5-5` (ticket y fechas, bien). Segunda parte terminada a petición suya: identificar por código y un formulario único. Pendiente de aplicar la migración nueva, subir las funciones, publicar y confirmar en el iPhone.
 
 ### Hecho
 
@@ -587,6 +601,13 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 - El historial muestra "Se añadió un ticket de Mercadona con 9 productos" con la lista de productos. Mis datos incluye los alias.
 - Tests: `apply_ticket`, alias, Deshacer del ticket entero, código y foto en lotes, límite diario y permisos contra Postgres real; validación de las respuestas de la IA, fechas aprendidas, borrador del ticket y Open Food Facts. La petición a Claude se comprobó en Deno contra una API simulada (versión de API, formato estructurado y errores), y el recorrido completo en el navegador con el SQL real, una cámara simulada que muestra un EAN-13 y respuestas de Claude preparadas.
 - Corregido: al llegar a Añadir con un producto ya elegido (desde un producto agotado), "Cambiar" no dejaba elegir otro.
+
+Segunda parte, tras la primera prueba del propietario:
+
+- Identificar por código: la casa recuerda cada código (`product_barcodes`). Un código nuevo pasa por la Edge Function `match-product`, que con Claude empareja lo que dice Open Food Facts, en cualquier idioma, con un producto de la casa o del catálogo, o propone uno nuevo con nombre en español que se puede cambiar. "Elegir otro producto" si no es (§11).
+- Un único formulario para añadir a mano, por código y en cada línea del ticket, con la unidad junto a la cantidad y el contenido de cada envase debajo. En el ticket se pueden poner también las fechas de congelado y de aviso (§6.3).
+- Corregido: una lectura de la cámara que llegaba tarde, después de escribir otro código a mano, sustituía el resultado.
+- Tests: códigos recordados (al añadir, con ticket, al asignar, al mover entre casas; permisos; Mis datos), ticket con congelador, límite de códigos nuevos, validación de la respuesta de `match-product` y lógica del formulario común. Recorrido en el navegador: "Haricots verts" → Judías verdes, código recordado sin IA, producto nuevo renombrado y unidades junto a la cantidad, en el alta y en el ticket.
 
 **Fase 3 · Avisos y conservación (confirmada)**
 
@@ -636,7 +657,7 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ### Pendiente
 
-- **Fase 4:** aplicar la migración (`npm run db:push`), activar la lectura con IA (`SETUP.md`, paso 13), publicar y comprobar la aceptación en el iPhone con un ticket real. Falta probar con Claude de verdad: en las pruebas su respuesta estaba preparada de antemano.
+- **Fase 4:** aplicar la migración nueva (`npm run db:push` y `npm run db:types`), subir las funciones (`npm run functions:deploy`, ahora con `match-product`), publicar y comprobar la aceptación en el iPhone. La identificación por código no se ha probado aún con Claude de verdad: en las pruebas su respuesta estaba preparada de antemano.
 - **Revisión del propietario:** comprobar el contenido de conservación con sus fuentes (`src/content/conservation/SOURCES.md`) y poner `reviewed: true` en `review.json`. Faltan los lácteos abiertos, sin fuente accesible.
 - **Fase 5:** sin empezar, a la espera de confirmación del propietario.
 
@@ -696,4 +717,7 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **Open Food Facts desde el móvil**, con la cabecera `X-User-Agent`. Lo encontrado por código se reconoce por los lotes de la casa con ese código; no se añadió una tabla de códigos aparte.
 - **Fotos de Open Food Facts:** solo direcciones `https`, comprobado también en la base de datos. Si no cargan, no se muestran.
 - **Cámara:** dentro de la app (sigue abierta en el escaneo en cadena); si no hay permiso, la del sistema. El escáner solo se descarga al abrirlo.
-- **Borrador del ticket en el móvil:** sobrevive a recargar la app y no se paga otra lectura. Se borra al aplicar o descartar.
+- **Borrador del ticket en el móvil:** sobrevive a recargar la app y no se paga otra lectura. Se borra al aplicar o descartar. Un borrador de la primera parte (formato anterior) se descarta.
+- **Identificar por código con IA (segunda parte):** solo la primera vez que la casa ve un código, porque después lo recuerda. Límite propio de 100 al día. El catálogo va en caché de Claude, porque al vaciar la compra se escanean varios seguidos. Se reconoce por catálogo o por el producto de la casa; ante la duda, se propone un producto nuevo: un producto nuevo se corrige fácil, un emparejamiento equivocado no.
+- **Códigos recordados con un trigger sobre los lotes**, en vez de en cada función: así se apuntan igual al añadir, con ticket, al asignar el código o al mover entre casas. El último producto con ese código es el que vale. No entran en Deshacer, como algo aprendido.
+- **Formulario único:** "Cómo se cuenta" desaparece. La unidad elegida y el contenido de cada envase lo deciden: con contenido, `divisible`; sin él, `count`; con kg, g, l o ml, `bulk`. La zona son botones, como ya era en el ticket.

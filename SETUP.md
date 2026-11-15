@@ -363,16 +363,16 @@ Para que la clave no quede en el historial de PowerShell, va en un archivo tempo
 npm run functions:deploy
 ```
 
-Sube las cuatro funciones: las dos de notificaciones y las dos de lectura.
+Sube las cinco funciones: las dos de notificaciones, las dos de lectura (ticket y fecha) y la que identifica un producto por su código de barras (`match-product`).
 
 **Compruébalo**
 
 1. En la app, pulsa **＋ → Escanear ticket**, haz una foto de un ticket y pulsa **Leer ticket**. En unos segundos aparece la lista para revisar.
 2. Dentro de un producto, en **Editar** de un lote, prueba **Leer fecha con la cámara**.
 
-**Lo que cuesta:** se paga por uso. Como orientación, con `claude-opus-5-5` un ticket cuesta unos céntimos y una fecha, alrededor de un céntimo; lo exacto lo ves en la consola de Anthropic, en **Usage**. Para evitar sorpresas, la app permite a cada persona 20 tickets y 150 fechas al día.
+**Lo que cuesta:** se paga por uso. Con `claude-sonnet-5-5`, un ticket de 3 productos y dos fechas costaron 0,04 $ en la primera prueba. Identificar un código de barras que la casa aún no conoce cuesta, según lo calculado, alrededor de un céntimo (menos si escaneas varios seguidos); un código ya usado no cuesta nada, porque la casa lo recuerda. Lo exacto lo ves en la consola de Anthropic, en **Usage**. Para evitar sorpresas, la app permite a cada persona 20 tickets, 150 fechas y 100 códigos nuevos al día.
 
-**Privacidad:** la foto se envía a Anthropic solo para leerla y no se guarda en ningún sitio. Los códigos de barras se consultan en Open Food Facts, una base de datos pública y gratuita, sin enviar nada tuyo.
+**Privacidad:** la foto se envía a Anthropic solo para leerla y no se guarda en ningún sitio. Los códigos de barras se consultan en Open Food Facts, una base de datos pública y gratuita, sin enviar nada tuyo. Para identificar un código nuevo, a Anthropic le llega lo que dice Open Food Facts y la lista de productos de tu casa, sin fotos.
 
 ---
 
@@ -423,6 +423,7 @@ npm run functions:deploy
 | La notificación de prueba no llega | Abre la app desde el icono, no desde Safari. En los Ajustes del iPhone, comprueba **Notificaciones → Nevera** y que no haya un modo Concentración activo. Comprueba también que `npx supabase secrets list` muestra `VAPID_KEYS` y `VAPID_SUBJECT`. |
 | La prueba llega, pero el aviso diario no | Mira `cron.job_run_details` (paso 12). Si dice que falta la URL, revisa los nombres `project_url` y `secret_key` del Vault. Recuerda que solo llega si hay algo caducado o a punto de caducar. En Supabase, **Edge Functions → daily-digest → Logs** cuenta qué ha enviado. |
 | Al leer un ticket: "La lectura con IA todavía no está configurada" | Comprueba que `npx supabase secrets list` muestra `ANTHROPIC_API_KEY` y `ANTHROPIC_MODEL` (paso 13). Si están, el nombre del modelo está mal escrito o la clave se ha borrado en Anthropic: crea otra y repite el paso 13. En Supabase, **Edge Functions → parse-receipt → Logs** dice cuál de las dos. |
+| Al escanear un código: "No se ha podido identificar con IA" | Si después dice "Algo ha fallado", falta subir `match-product`: ejecuta `npm run functions:deploy`. Mientras tanto puedes elegir el producto a mano en el buscador; el código se guarda igual. |
 | "Se ha acabado el crédito de la lectura con IA" | Añade crédito en **Billing** de la consola de Anthropic. |
 | "El servicio de lectura no responde ahora mismo" | Anthropic está saturado o ha alcanzado tu límite de gasto mensual. Prueba más tarde o revisa los límites en la consola. |
 | La lectura no encuentra productos o se equivoca mucho | Haz la foto con el ticket plano, entero y con buena luz. Si es muy largo, usa **Añadir otra parte** para fotografiarlo en dos o tres trozos. Todo se puede corregir en la vista previa antes de añadir. |

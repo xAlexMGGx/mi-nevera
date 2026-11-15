@@ -449,6 +449,54 @@ export type Database = {
           },
         ]
       }
+      product_barcodes: {
+        Row: {
+          barcode: string
+          brand: string | null
+          created_at: string
+          house_id: string
+          id: string
+          image_url: string | null
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          barcode: string
+          brand?: string | null
+          created_at?: string
+          house_id: string
+          id?: string
+          image_url?: string | null
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string
+          brand?: string | null
+          created_at?: string
+          house_id?: string
+          id?: string
+          image_url?: string | null
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_barcodes_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_barcodes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           brand_notes: string | null

@@ -125,9 +125,9 @@ export function describeCounting(counting: Counting): string {
   return `count: ${counting.unit_label}`
 }
 
-/** La parte fija de las instrucciones, con el catálogo base. */
-export function receiptSystemPrompt(catalog: readonly CatalogEntry[]): string {
-  const catalogLines = catalog
+/** El catálogo base tal como lo lee el modelo. Lo comparten el ticket y la identificación por código. */
+export function catalogPrompt(catalog: readonly CatalogEntry[]): string {
+  const lines = catalog
     .map((item) =>
       `${item.slug} · ${item.name_es} / ${item.name_en} · ${item.category} · ${describeCounting({
         quantity_kind: item.default_quantity_kind,
@@ -137,7 +137,20 @@ export function receiptSystemPrompt(catalog: readonly CatalogEntry[]): string {
       })}`,
     )
     .join('\n')
+  return `Catalog (slug · Spanish / English name · category · counted as):\n${lines}`
+}
 
+/** Los productos de la casa con referencias cortas (p1, p2…) en vez de uuid. */
+export function productListing(products: readonly HouseProduct[]) {
+  const listed = products.slice(0, maxProducts)
+  const refs = new Map(listed.map((product, index) => [`p${index + 1}`, product.id]))
+  const refOf = new Map(listed.map((product, index) => [product.id, `p${index + 1}`]))
+  const lines = listed.map((product, index) => `p${index + 1} · ${product.name} · ${describeCounting(product)}`).join('\n')
+  return { refs, refOf, lines: lines || '(none yet)' }
+}
+
+/** La parte fija de las instrucciones, con el catálogo base. */
+export function receiptSystemPrompt(catalog: readonly CatalogEntry[]): string {
   return `You read photos of supermarket receipts, mostly from Spain, for a household food-inventory app. People review everything you return before it is saved, so be accurate rather than complete: never invent items.
 
 Return one entry in "lines" for each purchased item line of the receipt:
@@ -164,8 +177,7 @@ Rules:
 - Do not return expiry dates: the receipt does not have them.
 - If the photo is not a receipt or cannot be read, return no lines.
 
-Catalog (slug · Spanish / English name · category · counted as):
-${catalogLines}`
+${catalogPrompt(catalog)}`
 }
 
 export interface ReceiptContext {
@@ -179,11 +191,7 @@ export interface ReceiptContext {
 
 /** La parte que cambia en cada casa. Los productos van con referencias cortas en vez de uuid. */
 export function receiptUserText({ locale, today, products, aliases, photos = 1 }: ReceiptContext) {
-  const listed = products.slice(0, maxProducts)
-  const refs = new Map(listed.map((product, index) => [`p${index + 1}`, product.id]))
-  const refOf = new Map(listed.map((product, index) => [product.id, `p${index + 1}`]))
-
-  const productLines = listed.map((product, index) => `p${index + 1} · ${product.name} · ${describeCounting(product)}`).join('\n')
+  const { refs, refOf, lines: productLines } = productListing(products)
   const aliasLines = aliases
     .slice(0, maxAliases)
     .flatMap((alias) => {
@@ -195,7 +203,7 @@ export function receiptUserText({ locale, today, products, aliases, photos = 1 }
   const text = `Today is ${today}. Write the names in ${locale === 'en' ? 'English' : 'Spanish'}.
 
 Household products (ref · name · counted as):
-${productLines || '(none yet)'}
+${productLines}
 
 Receipt lines this household has already confirmed (receipt text, lowercased → product ref):
 ${aliasLines || '(none yet)'}
@@ -215,7 +223,7 @@ function isIsoDate(value: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
 }
 
-function cleanText(value: string | null, max: number): string | null {
+export function cleanText(value: string | null, max: number): string | null {
   const text = value?.replace(/\s+/g, ' ').trim()
   return text ? text.slice(0, max) : null
 }
@@ -257,7 +265,16 @@ function positive(value: number | null): number | null {
 
 const maxQuantity = 999
 
-function cleanCounting(line: ReceiptModelOutput['lines'][number]) {
+interface ModelCounting {
+  quantity: number
+  quantity_kind: QuantityKind
+  unit_label: UnitLabel
+  content_amount: number | null
+  content_unit: ContentUnit | null
+}
+
+/** Forma de contar coherente y cantidad dentro de límites. */
+export function cleanCounting(line: ModelCounting) {
   let kind = line.quantity_kind
   const unit: UnitLabel = line.unit_label === 'serving' ? 'unit' : line.unit_label
   let contentAmount = positive(line.content_amount)

@@ -410,6 +410,10 @@ import_map = "./functions/parse-receipt/deno.json"
 verify_jwt = false
 import_map = "./functions/read-date/deno.json"
 
+[functions.match-product]
+verify_jwt = false
+import_map = "./functions/match-product/deno.json"
+
 [analytics]
 enabled = true
 port = 54327

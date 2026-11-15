@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { checkImage, maxImageBytes } from '../supabase/functions/_shared/image.ts'
+import { cleanDescription, parseProductOutput, productTask, productUserText, toProductProposal, type ProductModelOutput } from '../supabase/functions/_shared/productMatch.ts'
 import { dateSystemPrompt, parseDateOutput, toDateResult, type DateModelOutput } from '../supabase/functions/_shared/readDate.ts'
 import {
   describeCounting,
@@ -256,6 +257,82 @@ describe('respuesta de la fecha', () => {
   it('las instrucciones piden ignorar lotes y fechas de envasado', () => {
     expect(dateSystemPrompt).toContain('Ignore lot numbers')
     expect(dateSystemPrompt).toContain('packaging or production dates')
+  })
+})
+
+describe('identificar un producto escaneado', () => {
+  const description = { names: ['Haricots verts extra-fins', 'Green beans'], brand: 'Bonduelle', quantity: '400 g', categories: ['en:green-beans'] }
+
+  function proposal(overrides: Partial<ProductModelOutput>) {
+    const { refs } = productUserText({ locale: 'es', products, description })
+    const output: ProductModelOutput = {
+      product_ref: null,
+      catalog_slug: null,
+      name: 'Judías verdes',
+      category: 'vegetables',
+      quantity_kind: 'divisible',
+      unit_label: 'jar',
+      content_amount: 400,
+      content_unit: 'g',
+      suggested_zone: 'pantry',
+      ...overrides,
+    }
+    return toProductProposal(output, { refs, products, catalog, description })
+  }
+
+  it('acepta solo lo que la app envía con forma y límites', () => {
+    expect(cleanDescription({ names: ['  Haricots   verts ', 'Haricots verts', 7], brand: 'Bonduelle', quantity: '400 g', categories: ['en:green-beans'] })).toEqual({
+      names: ['Haricots verts'],
+      brand: 'Bonduelle',
+      quantity: '400 g',
+      categories: ['en:green-beans'],
+    })
+    expect(cleanDescription({ names: [] })).toBeNull()
+    expect(cleanDescription('texto')).toBeNull()
+    expect(cleanDescription({ names: Array.from({ length: 20 }, (_, i) => `n${i}`), categories: Array.from({ length: 30 }, (_, i) => `c${i}`) })).toMatchObject({
+      names: expect.arrayContaining(['n0']),
+    })
+    expect(cleanDescription({ names: Array.from({ length: 20 }, (_, i) => `n${i}`) })!.names).toHaveLength(6)
+  })
+
+  it('el modelo recibe los nombres en cualquier idioma y los productos con referencias cortas', () => {
+    const { text } = productUserText({ locale: 'es', products, description })
+    expect(text).toContain('Names: "Haricots verts extra-fins", "Green beans"')
+    expect(text).toContain('p1 · Huevos · count: egg')
+    expect(text).toContain('Write the name in Spanish.')
+    expect(productTask).toContain('"Haricots verts extra-fins" is "Judías verdes"')
+  })
+
+  it('traduce la referencia o el catálogo a productos reales y descarta lo inventado', () => {
+    expect(proposal({ product_ref: 'p1' })).toMatchObject({ matched_product_id: 'prod-eggs', catalog_item_id: null })
+    expect(proposal({ product_ref: 'p42' })).toMatchObject({ matched_product_id: null, catalog_item_id: null })
+    expect(proposal({ catalog_slug: 'leche-semidesnatada' })).toMatchObject({ matched_product_id: null, catalog_item_id: 'cat-milk', category: 'dairy_eggs' })
+    // Del catálogo, pero la casa ya lo tiene como producto.
+    expect(proposal({ catalog_slug: 'tomate' })).toMatchObject({ matched_product_id: 'prod-tomato', catalog_item_id: null })
+  })
+
+  it('propone un producto nuevo con nombre genérico y forma de contar coherente', () => {
+    expect(proposal({})).toEqual({
+      matched_product_id: null,
+      catalog_item_id: null,
+      name: 'Judías verdes',
+      category: 'vegetables',
+      quantity_kind: 'divisible',
+      unit_label: 'jar',
+      content_amount: 400,
+      content_unit: 'g',
+      suggested_zone: 'pantry',
+    })
+    expect(proposal({ content_amount: null })).toMatchObject({ quantity_kind: 'count', content_amount: null, content_unit: null })
+    // Sin nombre, el primero de Open Food Facts.
+    expect(proposal({ name: '  ' }).name).toBe('Haricots verts extra-fins')
+  })
+
+  it('valida la respuesta', () => {
+    const valid = { product_ref: null, catalog_slug: null, name: 'Judías verdes', category: 'Vegetables', quantity_kind: 'count', unit_label: 'bag', content_amount: null, content_unit: null, suggested_zone: 'freezer' }
+    expect(parseProductOutput(JSON.stringify(valid))?.category).toBe('vegetables')
+    expect(parseProductOutput(JSON.stringify({ ...valid, suggested_zone: 'garage' }))).toBeNull()
+    expect(parseProductOutput('{}')).toBeNull()
   })
 })
 
