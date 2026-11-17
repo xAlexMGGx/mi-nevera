@@ -12,9 +12,11 @@ import { ActionChip, Button, Card, FullScreenLoader, LoadError, Message, TextAre
 import { useCatalog } from '../data/catalog'
 import { useDateContext } from '../data/context'
 import { useInventory, useInventoryAction } from '../data/inventory'
+import { useAddShoppingItem, useShoppingList } from '../data/shopping'
 import { formatDate, formatDayMonth } from '../domain/dates'
 import { productIcon, productName, type Lot, type OpenedUnit, type Product, type Zone } from '../domain/inventory'
 import { brandPhotos } from '../domain/photos'
+import { isOnList } from '../domain/shopping'
 import { formatPercent, formatNumber, formatQuantity, summarize, totalContent } from '../domain/quantity'
 import { statusOf, type RowDate } from '../domain/status'
 import type { ZoneKind } from '../domain/types'
@@ -275,6 +277,34 @@ function BrandForm({ product }: { product: Product }) {
   )
 }
 
+/** "Se ha acabado → añadir a la lista" (SPEC §6.2), o enlace a la lista si ya está apuntado. */
+function ShoppingButton({ product, name, finished }: { product: Product; name: string; finished: boolean }) {
+  const { t } = useTranslation()
+  const offline = useOffline()
+  const list = useShoppingList()
+  const add = useAddShoppingItem()
+
+  if (list.data && isOnList(list.data, product)) {
+    return (
+      <Link to="/shopping" className={buttonClass('secondary')}>
+        {t('product.inList')}
+      </Link>
+    )
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        variant="secondary"
+        disabled={offline || add.isPending || !list.data}
+        onClick={() => add.mutate({ houseId: product.house_id, productId: product.id, name, origin: finished ? 'finished' : 'manual' })}
+      >
+        {finished ? t('product.finishedToList') : t('product.addToList')}
+      </Button>
+      {add.isError && <Message tone="error">{t(errorKey(add.error))}</Message>}
+    </div>
+  )
+}
+
 function groupTitle(lot: Lot, t: ReturnType<typeof useTranslation>['t'], tag: string, today: string) {
   if (lot.cooked_at) return t('product.cookedOn', { date: formatDate(lot.cooked_at, tag, today) })
   if (!lot.printed_date) return t('product.noDate')
@@ -477,6 +507,7 @@ export function ProductPage() {
             </div>
           )}
 
+          {!isDish && <ShoppingButton product={product} name={name} finished={!hasStock} />}
           {!isDish && <BrandForm key={product.id} product={product} />}
           {renderSheet()}
         </div>

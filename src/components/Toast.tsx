@@ -6,15 +6,24 @@ import { errorKey } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 
 const visibleMs = 5000
+/** Con una acción ("Se ha acabado: X." · A la lista) hace falta algo más de tiempo para decidir. */
+const visibleWithActionMs = 8000
+
+export interface ToastAction {
+  label: string
+  run: () => Promise<void>
+}
 
 interface ToastState {
   text: string
   tone: 'info' | 'error'
   movementId?: string
+  action?: ToastAction
 }
 
 interface ToastContextValue {
-  showUndo: (text: string, movementId: string) => void
+  showUndo: (text: string, movementId: string, action?: ToastAction) => void
+  showInfo: (text: string) => void
   showError: (text: string) => void
 }
 
@@ -32,17 +41,28 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!toast) return
     clearTimeout(timer.current)
-    timer.current = setTimeout(() => setToast(null), visibleMs)
+    timer.current = setTimeout(() => setToast(null), toast.action ? visibleWithActionMs : visibleMs)
     return () => clearTimeout(timer.current)
   }, [toast])
 
   const value = useMemo<ToastContextValue>(
     () => ({
-      showUndo: (text, movementId) => setToast({ text, tone: 'info', movementId }),
+      showUndo: (text, movementId, action) => setToast({ text, tone: 'info', movementId, action }),
+      showInfo: (text) => setToast({ text, tone: 'info' }),
       showError: (text) => setToast({ text, tone: 'error' }),
     }),
     [],
   )
+
+  async function runAction(action: ToastAction) {
+    setUndoing(true)
+    try {
+      await action.run()
+    } catch (error) {
+      setToast({ text: t(errorKey(error)), tone: 'error' })
+    }
+    setUndoing(false)
+  }
 
   async function undo(movementId: string) {
     setUndoing(true)
@@ -52,6 +72,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     } else {
       await queryClient.invalidateQueries({ queryKey: ['inventory'] })
       await queryClient.invalidateQueries({ queryKey: ['movements'] })
+      // Deshacer un ticket vuelve a dejar pendiente lo que tachó de la lista.
+      void queryClient.invalidateQueries({ queryKey: ['shopping'] })
       setToast({ text: t('toast.undone'), tone: 'info' })
     }
     setUndoing(false)
@@ -68,6 +90,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             }`}
           >
             <p className="min-w-0 flex-1 py-1.5">{toast.text}</p>
+            {toast.action && !offline && (
+              <button
+                type="button"
+                disabled={undoing}
+                onClick={() => void runAction(toast.action!)}
+                className="min-h-10 shrink-0 rounded-lg bg-canvas px-3 font-bold text-ink active:opacity-70 disabled:opacity-50"
+              >
+                {toast.action.label}
+              </button>
+            )}
             {toast.movementId && !offline && (
               <button
                 type="button"

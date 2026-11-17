@@ -429,4 +429,6 @@ npm run functions:deploy
 | La lectura no encuentra productos o se equivoca mucho | Haz la foto con el ticket plano, entero y con buena luz. Si es muy largo, usa **Añadir otra parte** para fotografiarlo en dos o tres trozos. Todo se puede corregir en la vista previa antes de añadir. |
 | La cámara no se abre dentro de la app | Acepta el permiso de cámara cuando lo pida. Si lo rechazaste, actívalo en los Ajustes del iPhone (**Apps → Safari → Cámara**). Mientras tanto, el botón **Hacer foto** abre la cámara del sistema. |
 | Una foto propia no se sube o no se ve | Falta la migración de la Fase 5: ejecuta `npm run db:push`. Crea el bucket privado `photos`, que verás en Supabase en **Storage**. Las fotos solo las ven las personas de las casas que las usan. |
+| La pestaña **Compra** no carga o no deja apuntar nada | Falta la migración de la Fase 6: ejecuta `npm run db:push`. No necesita funciones ni secretos nuevos. |
+| Lo que tacha una persona tarda en verse en el otro móvil | Igual que el inventario: llega en uno o dos segundos con la app abierta. Si el móvil estaba bloqueado, se pone al día al volver a la app. |
 | La app deja de responder tras días sin usarla | El plan gratuito pausa el proyecto tras una semana con poca actividad. Entra en Supabase y restáuralo: no se pierde ningún dato. |

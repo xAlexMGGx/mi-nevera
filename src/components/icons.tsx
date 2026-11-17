@@ -69,6 +69,16 @@ export function ListIcon() {
   )
 }
 
+export function CartIcon() {
+  return (
+    <svg {...shared}>
+      <circle cx="9" cy="20" r="1.5" />
+      <circle cx="18" cy="20" r="1.5" />
+      <path d="M2.5 3h2.6l2.3 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 7H6.1" />
+    </svg>
+  )
+}
+
 /** Tarjetas en dos columnas. */
 export function GridIcon() {
   return (

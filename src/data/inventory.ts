@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { useToast } from '../components/Toast'
-import type { InventoryData, Lot, OpenedUnit } from '../domain/inventory'
+import { useToast, type ToastAction } from '../components/Toast'
+import { productName, type CatalogItem, type InventoryData, type Lot, type OpenedUnit } from '../domain/inventory'
+import { emptiedProducts, isOnList } from '../domain/shopping'
 import { useOffline } from '../lib/connectivity'
 import { errorKey } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 import { useActiveHouseId } from './house'
+import { addShoppingItem, fetchShopping, shoppingKey } from './shopping'
 
 export async function fetchInventory(houseId: string): Promise<InventoryData> {
   const [zones, products, lots, units] = await Promise.all([
@@ -60,12 +62,37 @@ interface ActionOptions {
   inlineErrors?: boolean
 }
 
+/** Acciones tras las que un producto puede quedarse sin nada (SPEC §13). Mover no: sigue existiendo en otro sitio. */
+const finishingActions: ReadonlySet<ToastKey> = new Set(['consumed', 'finished', 'discarded', 'adjusted'])
+
 /** Ejecuta una operación del inventario, refresca los datos y ofrece deshacerla. */
 export function useInventoryAction({ inlineErrors = false }: ActionOptions = {}) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const { showUndo, showError } = useToast()
+  const houseId = useActiveHouseId()
+  const { showUndo, showInfo, showError } = useToast()
   const offline = useOffline()
+
+  /** Si se ha terminado la última unidad de un producto que no está en la lista: "¿Añadir a la lista?". */
+  async function finishedQuestion(before: InventoryData | undefined): Promise<{ text: string; action: ToastAction } | null> {
+    const [product] = emptiedProducts(before, queryClient.getQueryData<InventoryData>(inventoryKey(houseId)))
+    if (!product) return null
+    const list = await queryClient.ensureQueryData({ queryKey: shoppingKey(houseId), queryFn: () => fetchShopping(houseId) }).catch(() => [])
+    if (isOnList(list, product)) return null
+
+    const catalog = new Map((queryClient.getQueryData<CatalogItem[]>(['catalog']) ?? []).map((item) => [item.id, item]))
+    const name = productName(product, catalog, i18n.resolvedLanguage ?? 'es')
+    return {
+      text: t('toast.finishedAsk', { name }),
+      action: {
+        label: t('toast.addToList'),
+        run: async () => {
+          await addShoppingItem(queryClient, { houseId, productId: product.id, name, origin: 'finished' })
+          showInfo(t('toast.addedToList', { name }))
+        },
+      },
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: async ({ call }: { toast: ToastKey; call: Rpc }) => {
@@ -74,11 +101,18 @@ export function useInventoryAction({ inlineErrors = false }: ActionOptions = {})
       return data
     },
     onSuccess: async (movementId, { toast }) => {
+      const before = queryClient.getQueryData<InventoryData>(inventoryKey(houseId))
       await queryClient.invalidateQueries({ queryKey: ['inventory'] })
       await queryClient.invalidateQueries({ queryKey: ['movements'] })
       // Al añadir con fecha, la casa aprende cuánto suele durar (SPEC §7.4).
       void queryClient.invalidateQueries({ queryKey: ['dateSamples'] })
-      if (typeof movementId === 'string') showUndo(t(`toast.${toast}`), movementId)
+      // Un ticket tacha lo comprado de la lista.
+      void queryClient.invalidateQueries({ queryKey: ['shopping'] })
+      if (typeof movementId !== 'string') return
+
+      const question = finishingActions.has(toast) ? await finishedQuestion(before) : null
+      if (question) showUndo(question.text, movementId, question.action)
+      else showUndo(t(`toast.${toast}`), movementId)
     },
     onError: (error) => {
       if (!inlineErrors) showError(t(errorKey(error)))

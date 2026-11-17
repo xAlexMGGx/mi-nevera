@@ -23,7 +23,10 @@
     "label": "Navegación principal",
     "inventory": "Inventario",
     "alerts": "Avisos",
-    "add": "Añadir"
+    "add": "Añadir",
+    "shopping": "Compra",
+    "shoppingPending_one": "Compra, {{count}} pendiente",
+    "shoppingPending_other": "Compra, {{count}} pendientes"
   },
   "zones": {
     "fridge": "Frigo",
@@ -183,6 +186,35 @@
     "discard": "Tirar",
     "view": "Ver",
     "conservation": "Conservación y seguridad"
+  },
+  "shopping": {
+    "title": "Lista de la compra",
+    "addLabel": "Qué hay que comprar",
+    "addPlaceholder": "Añadir a la lista…",
+    "quantityLabel": "Cantidad",
+    "quantityPlaceholder": "Cant.",
+    "add": "Añadir a la lista",
+    "suggestions": "Sugerencias",
+    "already": "{{name}} ya estaba en la lista.",
+    "editTitle": "Editar",
+    "name": "Qué",
+    "quantity": "Cantidad",
+    "quantityExample": "Por ejemplo: 2 bricks",
+    "remove": "Quitar de la lista",
+    "check": "Comprado: {{name}}",
+    "edit": "Editar {{name}}",
+    "emptyTitle": "La lista está vacía",
+    "emptyBody": "Añade arriba lo que haga falta. Cuando se acabe algo de casa, la app te propondrá apuntarlo.",
+    "pending_one": "{{count}} pendiente",
+    "pending_other": "{{count}} pendientes",
+    "bought_one": "{{count}} comprado",
+    "bought_other": "{{count}} comprados",
+    "allBought": "Ya está todo comprado.",
+    "clearBought": "Borrar comprados ({{count}})",
+    "clearTitle": "¿Borrar lo comprado?",
+    "clearBody_one": "Se quitará de la lista {{count}} cosa tachada.",
+    "clearBody_other": "Se quitarán de la lista las {{count}} cosas tachadas.",
+    "clearSubmit": "Borrar comprados"
   },
   "shelfLife": {
     "chip": "Orientativo: {{period}}",
@@ -426,7 +458,8 @@
       "dateType": "Falta indicar si es de caducidad o de consumo preferente.",
       "name": "Falta el nombre del producto.",
       "content": "Falta cuánto contiene cada envase."
-    }
+    },
+    "onList": "En tu lista: se tachará"
   },
   "form": {
     "category": "Categoría",
@@ -518,7 +551,10 @@
     "photoOf": "Foto {{current}} de {{total}}",
     "noBrand": "Sin marca",
     "addPhoto": "Añadir foto",
-    "changePhoto": "Cambiar foto"
+    "changePhoto": "Cambiar foto",
+    "addToList": "Añadir a la lista de la compra",
+    "finishedToList": "Se ha acabado: añadir a la lista",
+    "inList": "Ya está en la lista de la compra"
   },
   "photo": {
     "titleProduct": "Foto del producto",
@@ -639,7 +675,10 @@
     "thawed": "Descongelado",
     "discarded": "Tirado",
     "edited": "Guardado",
-    "ticket": "Ticket añadido"
+    "ticket": "Ticket añadido",
+    "finishedAsk": "Se ha acabado: {{name}}.",
+    "addToList": "A la lista",
+    "addedToList": "{{name}}: añadido a la lista"
   },
   "errors": {
     "not_member": "No perteneces a esta casa.",

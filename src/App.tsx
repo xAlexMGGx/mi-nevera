@@ -20,6 +20,7 @@ import { ProductPage } from './pages/ProductPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { ShoppingPage } from './pages/ShoppingPage'
 import { TicketPage } from './pages/TicketPage'
 
 /** Enlace de invitación sin haber entrado: se recuerda para después de iniciar sesión. */
@@ -54,6 +55,7 @@ export function App() {
         <Route element={<TabsLayout />}>
           <Route index element={<InventoryPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/shopping" element={<ShoppingPage />} />
         </Route>
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/conservation" element={<ConservationPage />} />

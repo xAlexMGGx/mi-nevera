@@ -134,7 +134,7 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 - **`shelf_life_guide`** (fase 3): `catalog_item_id` o `category`, `state` (`opened`|`frozen`|`thawed`|`cooked`|`closed_fridge`|`closed_pantry`), `min_days`, `max_days`, `note_es`, `note_en`, `source`. Sin días, la fuente desaconseja ese estado (por ejemplo, congelar huevos con cáscara). Se genera a partir de `src/content/conservation/shelf-life.json`.
 - **`private.digest_log`** (fase 3): `user_id`, `house_id`, `day`. Lo ya avisado, para no repetir el aviso diario.
 - **`private.ai_usage`** (fase 4): `user_id`, `day`, `kind` (`receipt`|`date`|`product`), `count`. Lecturas con IA de cada persona y día, para el límite diario (20 tickets, 150 fechas y 100 códigos nuevos).
-- **`shopping_items`** (fase 6): `house_id`, `product_id` (nullable), `name`, `quantity_text`, `preferred_brand`, `checked`, `origin` (`manual`|`finished`|`recipe`).
+- **`shopping_items`** (fase 6): `house_id`, `product_id` (nullable), `name`, `quantity_text`, `preferred_brand`, `checked`, `checked_at`, `origin` (`manual`|`finished`|`recipe`).
 - **`recipe_favorites`** (fase 7): `user_id`, `house_id`, `title`, `recipe jsonb`.
 - **`recipe_blocked`** (fase 7): `user_id`, `title_normalized`.
 
@@ -163,7 +163,7 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | `move_lot(lot_id, quantity, target_zone_id, opened_unit_ids?, reminder_date?)` | Mueve entre zonas o casas. Si se mueve parte, divide el lote conservando fechas y marca. Mover al Congelador es congelar (`frozen`, fija `frozen_at`) y sacarlo es descongelar (`thawed`, fija `thawed_at`). Entre casas, empareja el producto destino por `catalog_item_id` o nombre normalizado; si no existe, lo crea (ver §7.5) |
 | `discard(lot_id, quantity, opened_unit_ids?)` | Tirar (distinto de consumir) |
 | `update_product(product_id, ...)` / `delete_product(product_id)` | Editan nombre, categoría, marca preferida y notas, o borran un producto sin existencias. No cambian el inventario, así que no registran movimiento |
-| `apply_ticket(house_id, lines, purchased_at?, store?)` | Aplica las líneas confirmadas de la preview y guarda alias. Todas en una sola operación, con un único movimiento `ticket_applied` que se deshace entero (alias incluidos) |
+| `apply_ticket(house_id, lines, purchased_at?, store?)` | Aplica las líneas confirmadas de la preview y guarda alias. Todas en una sola operación, con un único movimiento `ticket_applied` que se deshace entero (alias y lo tachado de la lista de la compra incluidos) |
 | `match_ticket_lines(house_id, raw_texts)` | Las líneas de ticket que la casa ya conoce por sus alias. La usa `parse-receipt`. No registra movimiento |
 | `claim_ai_use(kind)` | Cuenta una lectura con IA de quien llama y dice si cabe en su límite del día. La usan `parse-receipt`, `read-date` y `match-product` |
 | `cook_recipe(payload)` | Aplica los descuentos confirmados y, opcionalmente, crea táper |
@@ -175,6 +175,8 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | `leave_house(house_id)` / `remove_member(house_id, user_id)` | Salir o expulsar (solo el propietario). Si se va el propietario, la propiedad pasa al miembro más antiguo; si no queda nadie, la casa se borra. Quien se queda sin su casa activa pasa a otra de las suyas o a la bienvenida |
 | `export_my_data()` / `delete_account()` | Exportan el perfil y las casas a JSON, o eliminan la cuenta con las reglas de §6 |
 | `save_push_subscription(...)` / `delete_push_subscription(endpoint)` | Activan o desactivan las notificaciones en un móvil. No registran movimiento |
+| `add_shopping_item(house_id, name?, product_id?, quantity_text?, preferred_brand?, origin?)` | Apunta en la lista de la compra. Lo que ya está pendiente (mismo producto o mismo nombre) no se repite. No registra movimiento |
+| `update_shopping_item(item_id, patch)` / `delete_shopping_item(item_id)` / `clear_checked_shopping(house_id)` | Editan, tachan, quitan o borran lo comprado de la lista. No registran movimiento |
 | `digest_batch()` / `claim_digest(...)` / `forget_push_subscription(endpoint)` | Solo para la Edge Function `daily-digest`, con la clave secreta: a quién avisar ahora y con qué fechas, apuntar lo avisado y olvidar suscripciones caducadas |
 
 ---
@@ -460,6 +462,17 @@ Al asignar un código a un lote o a una línea del ticket, el producto ya está 
 - "Borrar comprados".
 - Al aplicar un ticket, las líneas emparejadas se marcan como compradas.
 
+**Cómo quedó (fase 6):**
+- Pestaña **Compra** en la barra inferior, con el número de cosas pendientes. El hueco de Recetas sigue reservado a la derecha.
+- Arriba, un campo para escribir qué hace falta y otro, corto, para la cantidad ("2", "1 kg", "3 paquetes"). Al escribir aparecen sugerencias de los productos de la casa y del catálogo; tocar una la apunta enlazada a su producto.
+- Lo apuntado a mano se enlaza solo con un producto de la casa si el nombre coincide, y hereda su marca preferida, que se puede cambiar en la propia lista sin tocar la del producto.
+- Lo que ya está pendiente no se repite: avisa "Leche semidesnatada ya estaba en la lista".
+- Primero lo pendiente, por orden de llegada; debajo, lo comprado, lo último arriba. Tocar cualquier parte de la fila la tacha (o la destacha); el lápiz abre la edición (qué, cantidad, marca, quitar). "Borrar comprados (N)" pide confirmación.
+- **Al acabarse algo:** al consumir, terminar, tirar o ajustar a cero la última existencia de un producto, el aviso dice "Se ha acabado: Huevos." con los botones **A la lista** y **Deshacer**. No pregunta si ya está en la lista, ni con los tápers, ni al moverlo a otra zona o casa.
+- En el **detalle de producto**: "Añadir a la lista de la compra" o, si ya está, un enlace "Ya está en la lista de la compra".
+- **Ticket:** en la vista previa, las líneas que están en la lista llevan "En tu lista: se tachará". Al aplicarlo se tachan las que coinciden por producto o, sin producto enlazado, por nombre. Deshacer el ticket las deja pendientes otra vez.
+- Tiempo real y sin conexión como el inventario: la lista se ve sin red, pero no se puede editar.
+
 ---
 
 ## 14. Recetas con IA (fase 7)
@@ -599,11 +612,21 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 5 · Tarjetas con foto. Código terminado, pendiente de aplicar la migración, publicar y confirmar en el iPhone.
+**Fase actual:** 6 · Lista de la compra. Código terminado, pendiente de aplicar la migración, publicar y confirmar en el iPhone.
 
 ### Hecho
 
-**Fase 5 · Tarjetas con foto**
+**Fase 6 · Lista de la compra**
+
+- Pestaña Compra con el número de pendientes, lista por casa compartida y en tiempo real (§13).
+- Apuntar a mano con cantidad libre, con sugerencias de la casa y del catálogo, enlace automático al producto por nombre y sin repetir lo que ya está pendiente.
+- Marca preferida visible y editable en cada elemento. Tachar (se ve al momento), editar, quitar y "Borrar comprados" con confirmación.
+- "Se ha acabado: X." con "A la lista" al terminar la última existencia, y botón en el detalle del producto.
+- El ticket tacha lo comprado, lo avisa en la vista previa y Deshacer lo devuelve a pendiente.
+- Mis datos incluye la lista.
+- Tests: apuntar, enlazar por nombre, no repetir, tachar, editar, quitar, borrar comprados, señal de tiempo real, permisos, borrar un producto sin perder su elemento de la lista, ticket que tacha por producto y por nombre, Deshacer y Mis datos, contra Postgres real; orden de la lista, "ya está en la lista" y qué productos se acaban. Recorrido en el navegador con dos móviles a la vez.
+
+**Fase 5 · Tarjetas con foto (confirmada)**
 
 - Vista de tarjetas en una o dos columnas, que se recuerda, con imagen, nombre, cantidad, fecha, "+N" marcas y número de táper (§12).
 - Carrusel con la foto de cada marca en el detalle del producto.
@@ -681,9 +704,9 @@ Segunda parte, tras la primera prueba del propietario:
 ### Pendiente
 
 - **Revisión del propietario:** comprobar el contenido de conservación con sus fuentes (`src/content/conservation/SOURCES.md`) y poner `reviewed: true` en `review.json`. Faltan los lácteos abiertos, sin fuente accesible.
-- **Fase 5:** aplicar la migración (`npm run db:push`), publicar y comprobar en el iPhone. Probado contra el SQL real con Storage emulado; falta el Storage real de Supabase.
+- **Fase 6:** aplicar la migración (`npm run db:push`), publicar y comprobar en el iPhone. No hay Edge Functions ni secretos nuevos.
 - **Fotos sin usar:** una foto propia que ya no usa ningún lote ni producto se queda en Storage, aunque nadie más que quien la subió puede verla. No se borra al quitarla, porque un lote dividido o movido comparte la misma foto. Si algún día ocupa demasiado, se puede añadir un limpiador.
-- **Fase 6:** sin empezar, a la espera de confirmación del propietario.
+- **Fase 7:** sin empezar, a la espera de confirmación del propietario. El origen `recipe` de la lista ya existe en la base de datos.
 - **Fase 9 · Tutorial:** en el backlog (§17). Antes de empezarla, acordar con el propietario los detalles.
 
 ### Decisiones tomadas (2026-11-09)
@@ -755,3 +778,13 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **La tarjeta no lleva −1:** el SPEC enumera lo que muestra y no incluye acciones. La lista sigue teniéndolo.
 - **Vista con iconos:** Lista, dos columnas y una columna en un solo grupo, para que quepa en una fila con el orden.
 - **Los códigos de barras solo recuerdan fotos de Open Food Facts**, no las propias.
+
+**Fase 6**
+
+- **Editar la lista no es un movimiento:** no entra en el historial ni tiene Deshacer, como renombrar un producto. Lo que sí se deshace es lo que hace un ticket en la lista, porque va dentro de su movimiento.
+- **Cuándo se ofrece "A la lista":** al quedarse sin existencias por consumir, terminar, tirar o ajustar, porque es cuando se ha gastado. No al moverlo a otra zona o casa, ni con los tápers, que no se compran. No pregunta si ya está pendiente.
+- **Sin repetidos:** apuntar algo que ya está pendiente (mismo producto o mismo nombre, sin distinguir mayúsculas ni tildes) no crea otro elemento. Si ya está tachado, sí se apunta de nuevo.
+- **Enlace por nombre:** lo escrito a mano se enlaza con el producto de la casa del mismo nombre, para que el ticket lo tache y el aviso no lo pregunte dos veces. Si se borra el producto, el elemento sigue en la lista sin enlace.
+- **El ticket tacha, no borra:** lo comprado queda tachado para revisarlo, y se borra con "Borrar comprados". Añadir a mano o por código no tacha nada: solo el ticket confirma que se ha comprado.
+- **La marca de la lista es del elemento:** al apuntarlo se copia la marca preferida del producto, y cambiarla en la lista no cambia la del producto.
+- **El aviso al acabarse algo** dura 8 segundos en vez de 5, para dar tiempo a decidir. El botón dice "A la lista" y no "Añadir", para no confundirlo con el botón de los formularios de alta, que puede estar en pantalla a la vez.

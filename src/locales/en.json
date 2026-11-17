@@ -23,7 +23,10 @@
     "label": "Main navigation",
     "inventory": "Inventory",
     "alerts": "Alerts",
-    "add": "Add"
+    "add": "Add",
+    "shopping": "Shopping",
+    "shoppingPending_one": "Shopping, {{count}} to buy",
+    "shoppingPending_other": "Shopping, {{count}} to buy"
   },
   "zones": {
     "fridge": "Fridge",
@@ -183,6 +186,35 @@
     "discard": "Throw away",
     "view": "View",
     "conservation": "Food storage and safety"
+  },
+  "shopping": {
+    "title": "Shopping list",
+    "addLabel": "What to buy",
+    "addPlaceholder": "Add to the list…",
+    "quantityLabel": "Quantity",
+    "quantityPlaceholder": "Qty",
+    "add": "Add to the list",
+    "suggestions": "Suggestions",
+    "already": "{{name}} was already on the list.",
+    "editTitle": "Edit",
+    "name": "What",
+    "quantity": "Quantity",
+    "quantityExample": "For example: 2 cartons",
+    "remove": "Remove from the list",
+    "check": "Bought: {{name}}",
+    "edit": "Edit {{name}}",
+    "emptyTitle": "The list is empty",
+    "emptyBody": "Add what you need above. When something runs out at home, the app will offer to add it.",
+    "pending_one": "{{count}} to buy",
+    "pending_other": "{{count}} to buy",
+    "bought_one": "{{count}} bought",
+    "bought_other": "{{count}} bought",
+    "allBought": "Everything is bought.",
+    "clearBought": "Clear bought ({{count}})",
+    "clearTitle": "Clear what was bought?",
+    "clearBody_one": "{{count}} ticked item will be removed from the list.",
+    "clearBody_other": "The {{count}} ticked items will be removed from the list.",
+    "clearSubmit": "Clear bought"
   },
   "shelfLife": {
     "chip": "Guide: {{period}}",
@@ -426,7 +458,8 @@
       "dateType": "Say whether it's a use-by or a best-before date.",
       "name": "The product name is missing.",
       "content": "How much each container holds is missing."
-    }
+    },
+    "onList": "On your list: it will be ticked"
   },
   "form": {
     "category": "Category",
@@ -518,7 +551,10 @@
     "photoOf": "Photo {{current}} of {{total}}",
     "noBrand": "No brand",
     "addPhoto": "Add photo",
-    "changePhoto": "Change photo"
+    "changePhoto": "Change photo",
+    "addToList": "Add to the shopping list",
+    "finishedToList": "It ran out: add to the list",
+    "inList": "Already on the shopping list"
   },
   "photo": {
     "titleProduct": "Product photo",
@@ -639,7 +675,10 @@
     "thawed": "Thawed",
     "discarded": "Thrown away",
     "edited": "Saved",
-    "ticket": "Receipt added"
+    "ticket": "Receipt added",
+    "finishedAsk": "{{name}} has run out.",
+    "addToList": "Add to list",
+    "addedToList": "{{name}}: added to the list"
   },
   "errors": {
     "not_member": "You don't belong to this home.",

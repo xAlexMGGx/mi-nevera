@@ -10,6 +10,7 @@ import { Button, FullScreenLoader, LoadError, Message, SelectField, TextField, f
 import { useCatalog } from '../../data/catalog'
 import { useDateContext } from '../../data/context'
 import { useDateSamples } from '../../data/dateSamples'
+import { useShoppingList } from '../../data/shopping'
 import { useHouses } from '../../data/house'
 import { fetchInventory, inventoryKey, useInventory, useInventoryAction } from '../../data/inventory'
 import { formatDate } from '../../domain/dates'
@@ -17,6 +18,7 @@ import type { InventoryData } from '../../domain/inventory'
 import { learnedDate, type DateSample } from '../../domain/learnedDates'
 import { formatQuantity } from '../../domain/quantity'
 import { emptyLine, lineCounting, lineLabel, lineProblem, targetFromSelection, type DraftLine } from '../../domain/lotDraft'
+import { isOnList } from '../../domain/shopping'
 import { applyPayload, chainQueue, moveDraftToHouse, removeLine, splitLine, updateLine, type TicketDraft } from '../../domain/ticket'
 import type { Json } from '../../lib/database.types'
 import { errorKey as errorKeyOf } from '../../lib/errors'
@@ -43,9 +45,11 @@ interface LineCardProps {
   onToggle: (checked: boolean) => void
   onDate: (date: string, type: DraftLine['dateType']) => void
   onEdit: () => void
+  /** Está pendiente en la lista de la compra: al aplicar, se tacha. */
+  onList: boolean
 }
 
-function LineCard({ line, house, samples, purchasedAt, onToggle, onDate, onEdit }: LineCardProps) {
+function LineCard({ line, house, samples, purchasedAt, onToggle, onDate, onEdit, onList }: LineCardProps) {
   const { t } = useTranslation()
   const { language, tag, today } = useDateContext()
   const catalog = useCatalog()
@@ -74,6 +78,7 @@ function LineCard({ line, house, samples, purchasedAt, onToggle, onDate, onEdit 
             <span className="block text-sm text-ink-muted">{details}</span>
             {line.rawText && <span className="block truncate text-xs text-ink-muted">{line.rawText}</span>}
             {line.fromAlias && <span className="block text-xs font-semibold text-brand">{t('ticket.fromAlias')}</span>}
+            {onList && line.checked && <span className="block text-xs font-semibold text-success">{t('ticket.onList')}</span>}
             {line.target.type === 'new' && line.checked && <span className="block text-xs font-semibold text-ink-muted">{t('ticket.newProduct')}</span>}
           </span>
         </button>
@@ -118,6 +123,7 @@ export function TicketPreview({ draft, update, onFinished }: TicketPreviewProps)
   const inventory = useInventory(draft.houseId)
   const catalog = useCatalog()
   const samples = useDateSamples(draft.houseId)
+  const shopping = useShoppingList(draft.houseId)
   const { run, pending, errorKey } = useInventoryAction({ inlineErrors: true })
   const [editing, setEditing] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -213,6 +219,7 @@ export function TicketPreview({ draft, update, onFinished }: TicketPreviewProps)
                 onToggle={(value) => update((current) => updateLine(current, line.key, { checked: value }))}
                 onDate={(printedDate, dateType) => update((current) => updateLine(current, line.key, { printedDate, dateType }))}
                 onEdit={() => setEditing(line.key)}
+                onList={isOnList(shopping.data ?? [], { id: line.target.type === 'product' ? line.target.productId : '', name: nameOf(line) })}
               />
             ))}
           </ul>

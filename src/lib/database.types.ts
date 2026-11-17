@@ -711,6 +711,63 @@ export type Database = {
           },
         ]
       }
+      shopping_items: {
+        Row: {
+          checked: boolean
+          checked_at: string | null
+          created_at: string
+          house_id: string
+          id: string
+          name: string
+          origin: Database["public"]["Enums"]["shopping_origin"]
+          preferred_brand: string | null
+          product_id: string | null
+          quantity_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          checked_at?: string | null
+          created_at?: string
+          house_id: string
+          id?: string
+          name: string
+          origin?: Database["public"]["Enums"]["shopping_origin"]
+          preferred_brand?: string | null
+          product_id?: string | null
+          quantity_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          checked_at?: string | null
+          created_at?: string
+          house_id?: string
+          id?: string
+          name?: string
+          origin?: Database["public"]["Enums"]["shopping_origin"]
+          preferred_brand?: string | null
+          product_id?: string | null
+          quantity_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_items_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_aliases: {
         Row: {
           brand: string | null
@@ -922,6 +979,17 @@ export type Database = {
         }
         Returns: string
       }
+      add_shopping_item: {
+        Args: {
+          p_house_id: string
+          p_name?: string
+          p_origin?: Database["public"]["Enums"]["shopping_origin"]
+          p_preferred_brand?: string
+          p_product_id?: string
+          p_quantity_text?: string
+        }
+        Returns: Json
+      }
       adjust_quantity: {
         Args: { p_lot_id: string; p_new_quantity: number }
         Returns: string
@@ -936,6 +1004,7 @@ export type Database = {
         Returns: string
       }
       claim_ai_use: { Args: { p_kind: string }; Returns: boolean }
+      clear_checked_shopping: { Args: { p_house_id: string }; Returns: number }
       claim_digest: {
         Args: { p_day: string; p_house_id: string; p_user_id: string }
         Returns: boolean
@@ -955,6 +1024,7 @@ export type Database = {
       delete_account: { Args: never; Returns: undefined }
       delete_house: { Args: { p_house_id: string }; Returns: undefined }
       delete_product: { Args: { p_product_id: string }; Returns: undefined }
+      delete_shopping_item: { Args: { p_item_id: string }; Returns: undefined }
       delete_push_subscription: {
         Args: { p_endpoint: string }
         Returns: undefined
@@ -1039,6 +1109,10 @@ export type Database = {
         Args: { p_opened_unit_id: string; p_patch: Json }
         Returns: string
       }
+      update_shopping_item: {
+        Args: { p_item_id: string; p_patch: Json }
+        Returns: undefined
+      }
       update_product: {
         Args: { p_patch: Json; p_product_id: string }
         Returns: undefined
@@ -1088,6 +1162,7 @@ export type Database = {
         | "cooked"
         | "closed_fridge"
         | "closed_pantry"
+      shopping_origin: "manual" | "finished" | "recipe"
       zone_kind: "fridge" | "freezer" | "pantry"
     }
     CompositeTypes: {
@@ -1262,6 +1337,7 @@ export const Constants = {
         "closed_fridge",
         "closed_pantry",
       ],
+      shopping_origin: ["manual", "finished", "recipe"],
       zone_kind: ["fridge", "freezer", "pantry"],
     },
   },

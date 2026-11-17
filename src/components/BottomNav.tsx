@@ -3,26 +3,34 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, useNavigate } from 'react-router'
 import { useActiveHouseId } from '../data/house'
 import { useInventory } from '../data/inventory'
+import { useShoppingList } from '../data/shopping'
 import { useOffline } from '../lib/connectivity'
 import type { AddPageState } from '../pages/AddPage'
 import { ScanBarcodeDialog } from '../scan/ScanBarcodeDialog'
-import { BellIcon, ListIcon, PlusIcon } from './icons'
+import { BellIcon, CartIcon, ListIcon, PlusIcon } from './icons'
 import { Sheet } from './Sheet'
 import { Button, focusRing } from './ui'
 
 const addButton = 'mx-auto flex size-14 -translate-y-3 items-center justify-center rounded-full bg-brand text-on-brand shadow-lg'
 
-function Tab({ to, icon, label }: { to: string; icon: ReactNode; label: string }) {
+/** `badge.label` es el nombre completo para lectores de pantalla: "Compra, 3 pendientes". */
+function Tab({ to, icon, label, badge }: { to: string; icon: ReactNode; label: string; badge?: { count: number; label: string } }) {
   return (
     <NavLink
       to={to}
       end
+      aria-label={badge && badge.count > 0 ? badge.label : undefined}
       className={({ isActive }) =>
-        `flex h-full flex-col items-center justify-center gap-0.5 text-xs font-medium ${isActive ? 'text-brand' : 'text-ink-muted'} ${focusRing}`
+        `relative flex h-full flex-col items-center justify-center gap-0.5 text-xs font-medium ${isActive ? 'text-brand' : 'text-ink-muted'} ${focusRing}`
       }
     >
       {icon}
       {label}
+      {badge && badge.count > 0 && (
+        <span aria-hidden="true" className="absolute top-1.5 left-1/2 ml-2 min-w-5 rounded-full bg-brand px-1.5 text-center text-xs leading-5 font-bold text-on-brand">
+          {badge.count}
+        </span>
+      )}
     </NavLink>
   )
 }
@@ -63,11 +71,13 @@ function AddMenu({ onClose }: { onClose: () => void }) {
   )
 }
 
-// Cinco huecos fijos: Compra y Recetas aparecerán aquí en sus fases, sin mover lo demás.
+// Cinco huecos fijos: Recetas aparecerá en su fase, sin mover lo demás.
 export function BottomNav() {
   const { t } = useTranslation()
   const offline = useOffline()
+  const shopping = useShoppingList()
   const [menuOpen, setMenuOpen] = useState(false)
+  const pending = shopping.data?.filter((item) => !item.checked).length ?? 0
 
   return (
     <nav aria-label={t('nav.label')} className="safe-bottom safe-x fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface">
@@ -84,6 +94,7 @@ export function BottomNav() {
         >
           <PlusIcon />
         </button>
+        <Tab to="/shopping" icon={<CartIcon />} label={t('nav.shopping')} badge={{ count: pending, label: t('nav.shoppingPending', { count: pending }) }} />
       </div>
       {menuOpen && <AddMenu onClose={() => setMenuOpen(false)} />}
     </nav>
