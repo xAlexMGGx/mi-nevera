@@ -321,9 +321,11 @@ La tarea se creó con las migraciones, pero necesita la dirección de tu proyect
 
 ---
 
-## 13. Activar la lectura con IA (tickets y fechas)
+## 13. Activar la IA (tickets, fechas, códigos y recetas)
 
-Leer un ticket o la fecha de un envase lo hace Claude, el modelo de IA de Anthropic, desde dos funciones de Supabase (`parse-receipt` y `read-date`). La clave de Anthropic solo se guarda en Supabase: ni en el proyecto ni en el móvil. Calcula unos 10 minutos.
+Leer un ticket o la fecha de un envase, identificar un código de barras nuevo y sugerir recetas lo hace Claude, el modelo de IA de Anthropic, desde funciones de Supabase (`parse-receipt`, `read-date`, `match-product` y `suggest-recipes`). La clave de Anthropic solo se guarda en Supabase: ni en el proyecto ni en el móvil. Calcula unos 10 minutos.
+
+> **Si ya hiciste este paso en la Fase 4**, para las recetas basta con `npm run db:push`, `npm run db:types` y `npm run functions:deploy` (apartado 3). La clave y el modelo son los mismos.
 
 **Antes de empezar:**
 
@@ -363,16 +365,17 @@ Para que la clave no quede en el historial de PowerShell, va en un archivo tempo
 npm run functions:deploy
 ```
 
-Sube las cinco funciones: las dos de notificaciones, las dos de lectura (ticket y fecha) y la que identifica un producto por su código de barras (`match-product`).
+Sube las seis funciones: las dos de notificaciones, las dos de lectura (ticket y fecha), la que identifica un producto por su código de barras (`match-product`) y la que sugiere recetas (`suggest-recipes`).
 
 **Compruébalo**
 
 1. En la app, pulsa **＋ → Escanear ticket**, haz una foto de un ticket y pulsa **Leer ticket**. En unos segundos aparece la lista para revisar.
 2. Dentro de un producto, en **Editar** de un lote, prueba **Leer fecha con la cámara**.
+3. En la pestaña **Recetas**, pulsa **Sugerir**. En menos de un minuto aparecen tres recetas.
 
-**Lo que cuesta:** se paga por uso. Con `claude-sonnet-5-5`, un ticket de 3 productos y dos fechas costaron 0,04 $ en la primera prueba. Identificar un código de barras que la casa aún no conoce cuesta, según lo calculado, alrededor de un céntimo (menos si escaneas varios seguidos); un código ya usado no cuesta nada, porque la casa lo recuerda. Lo exacto lo ves en la consola de Anthropic, en **Usage**. Para evitar sorpresas, la app permite a cada persona 20 tickets, 150 fechas y 100 códigos nuevos al día.
+**Lo que cuesta:** se paga por uso. Con `claude-sonnet-5-5`, un ticket de 3 productos y dos fechas costaron 0,04 $ en la primera prueba. Identificar un código de barras que la casa aún no conoce cuesta, según lo calculado, alrededor de un céntimo (menos si escaneas varios seguidos); un código ya usado no cuesta nada, porque la casa lo recuerda. Una sugerencia de tres recetas cuesta, según lo calculado, unos 4 o 5 céntimos con `claude-sonnet-5-5` (el doble con `claude-opus-5-5`); volver a ver las últimas sugerencias no cuesta nada. Lo exacto lo ves en la consola de Anthropic, en **Usage**. Para evitar sorpresas, la app permite a cada persona 20 tickets, 150 fechas, 100 códigos nuevos y 20 sugerencias de recetas al día.
 
-**Privacidad:** la foto se envía a Anthropic solo para leerla y no se guarda en ningún sitio. Los códigos de barras se consultan en Open Food Facts, una base de datos pública y gratuita, sin enviar nada tuyo. Para identificar un código nuevo, a Anthropic le llega lo que dice Open Food Facts y la lista de productos de tu casa, sin fotos.
+**Privacidad:** la foto se envía a Anthropic solo para leerla y no se guarda en ningún sitio. Los códigos de barras se consultan en Open Food Facts, una base de datos pública y gratuita, sin enviar nada tuyo. Para identificar un código nuevo, a Anthropic le llega lo que dice Open Food Facts y la lista de productos de tu casa, sin fotos. Para sugerir recetas le llega lo que hay en la casa (nombres, cantidades y fechas), tus preferencias de recetas y los títulos de tus favoritas y de las que no quieres ver; ni tu nombre ni tu correo.
 
 ---
 
@@ -431,4 +434,8 @@ npm run functions:deploy
 | Una foto propia no se sube o no se ve | Falta la migración de la Fase 5: ejecuta `npm run db:push`. Crea el bucket privado `photos`, que verás en Supabase en **Storage**. Las fotos solo las ven las personas de las casas que las usan. |
 | La pestaña **Compra** no carga o no deja apuntar nada | Falta la migración de la Fase 6: ejecuta `npm run db:push`. No necesita funciones ni secretos nuevos. |
 | Lo que tacha una persona tarda en verse en el otro móvil | Igual que el inventario: llega en uno o dos segundos con la app abierta. Si el móvil estaba bloqueado, se pone al día al volver a la app. |
+| Al pulsar **Sugerir**: "Algo ha fallado" | Falta subir `suggest-recipes`: ejecuta `npm run functions:deploy`. Si sigue fallando, en Supabase, **Edge Functions → suggest-recipes → Logs** dice por qué. |
+| "Las recetas con IA todavía no están configuradas" | Faltan los secretos de Anthropic del paso 13 (los mismos que para el ticket). |
+| Al pulsar **He cocinado esto** o el corazón: "Algo ha fallado" | Falta la migración de la Fase 7: ejecuta `npm run db:push` y después `npm run db:types`. |
+| Las recetas proponen cosas que no te gustan | Escríbelo en **Ajustes → Preferencias de recetas** ("no me gusta el cilantro"). Una receta concreta se quita con **No me la vuelvas a sugerir**. |
 | La app deja de responder tras días sin usarla | El plan gratuito pausa el proyecto tras una semana con poca actividad. Entra en Supabase y restáuralo: no se pierde ningún dato. |

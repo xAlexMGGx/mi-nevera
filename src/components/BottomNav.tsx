@@ -7,7 +7,7 @@ import { useShoppingList } from '../data/shopping'
 import { useOffline } from '../lib/connectivity'
 import type { AddPageState } from '../pages/AddPage'
 import { ScanBarcodeDialog } from '../scan/ScanBarcodeDialog'
-import { BellIcon, CartIcon, ListIcon, PlusIcon } from './icons'
+import { BellIcon, CartIcon, ListIcon, PlusIcon, PotIcon } from './icons'
 import { Sheet } from './Sheet'
 import { Button, focusRing } from './ui'
 
@@ -71,7 +71,7 @@ function AddMenu({ onClose }: { onClose: () => void }) {
   )
 }
 
-// Cinco huecos fijos: Recetas aparecerá en su fase, sin mover lo demás.
+// Cinco huecos (SPEC §6): Inventario, Avisos, ＋, Compra y Recetas.
 export function BottomNav() {
   const { t } = useTranslation()
   const offline = useOffline()
@@ -95,6 +95,7 @@ export function BottomNav() {
           <PlusIcon />
         </button>
         <Tab to="/shopping" icon={<CartIcon />} label={t('nav.shopping')} badge={{ count: pending, label: t('nav.shoppingPending', { count: pending }) }} />
+        <Tab to="/recipes" icon={<PotIcon />} label={t('nav.recipes')} />
       </div>
       {menuOpen && <AddMenu onClose={() => setMenuOpen(false)} />}
     </nav>

@@ -661,6 +661,68 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_blocked: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          title_normalized: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title: string
+          title_normalized: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          title_normalized?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recipe_favorites: {
+        Row: {
+          created_at: string
+          house_id: string | null
+          id: string
+          recipe: Json
+          title: string
+          title_normalized: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          house_id?: string | null
+          id?: string
+          recipe: Json
+          title: string
+          title_normalized: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          house_id?: string | null
+          id?: string
+          recipe?: Json
+          title?: string
+          title_normalized?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_favorites_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "houses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shelf_life_guide: {
         Row: {
           catalog_item_id: string | null
@@ -1003,12 +1065,13 @@ export type Database = {
         }
         Returns: string
       }
+      block_recipe: { Args: { p_title: string }; Returns: string }
       claim_ai_use: { Args: { p_kind: string }; Returns: boolean }
-      clear_checked_shopping: { Args: { p_house_id: string }; Returns: number }
       claim_digest: {
         Args: { p_day: string; p_house_id: string; p_user_id: string }
         Returns: boolean
       }
+      clear_checked_shopping: { Args: { p_house_id: string }; Returns: number }
       consume: {
         Args: {
           p_all?: boolean
@@ -1019,16 +1082,29 @@ export type Database = {
         }
         Returns: string
       }
+      cook_recipe: {
+        Args: {
+          p_dish?: Json
+          p_house_id: string
+          p_items: Json
+          p_title: string
+        }
+        Returns: string
+      }
       create_house: { Args: { p_name: string }; Returns: string }
       create_invite: { Args: { p_house_id: string }; Returns: string }
       delete_account: { Args: never; Returns: undefined }
       delete_house: { Args: { p_house_id: string }; Returns: undefined }
       delete_product: { Args: { p_product_id: string }; Returns: undefined }
-      delete_shopping_item: { Args: { p_item_id: string }; Returns: undefined }
       delete_push_subscription: {
         Args: { p_endpoint: string }
         Returns: undefined
       }
+      delete_recipe_favorite: {
+        Args: { p_favorite_id: string }
+        Returns: undefined
+      }
+      delete_shopping_item: { Args: { p_item_id: string }; Returns: undefined }
       digest_batch: { Args: { p_now?: string }; Returns: Json }
       discard: {
         Args: {
@@ -1099,22 +1175,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_recipe_favorite: {
+        Args: { p_house_id: string; p_recipe: Json }
+        Returns: string
+      }
       set_remaining: {
         Args: { p_fraction: number; p_opened_unit_id: string }
         Returns: string
       }
+      unblock_recipe: { Args: { p_blocked_id: string }; Returns: undefined }
       undo_movement: { Args: { p_movement_id: string }; Returns: undefined }
       update_lot: { Args: { p_lot_id: string; p_patch: Json }; Returns: string }
       update_opened_unit: {
         Args: { p_opened_unit_id: string; p_patch: Json }
         Returns: string
       }
-      update_shopping_item: {
-        Args: { p_item_id: string; p_patch: Json }
-        Returns: undefined
-      }
       update_product: {
         Args: { p_patch: Json; p_product_id: string }
+        Returns: undefined
+      }
+      update_shopping_item: {
+        Args: { p_item_id: string; p_patch: Json }
         Returns: undefined
       }
     }

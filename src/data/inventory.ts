@@ -54,6 +54,7 @@ export type ToastKey =
   | 'discarded'
   | 'edited'
   | 'ticket'
+  | 'recipe'
 
 type Rpc = () => PromiseLike<{ data: unknown; error: unknown }>
 
@@ -63,7 +64,7 @@ interface ActionOptions {
 }
 
 /** Acciones tras las que un producto puede quedarse sin nada (SPEC §13). Mover no: sigue existiendo en otro sitio. */
-const finishingActions: ReadonlySet<ToastKey> = new Set(['consumed', 'finished', 'discarded', 'adjusted'])
+const finishingActions: ReadonlySet<ToastKey> = new Set(['consumed', 'finished', 'discarded', 'adjusted', 'recipe'])
 
 /** Ejecuta una operación del inventario, refresca los datos y ofrece deshacerla. */
 export function useInventoryAction({ inlineErrors = false }: ActionOptions = {}) {
@@ -73,22 +74,30 @@ export function useInventoryAction({ inlineErrors = false }: ActionOptions = {})
   const { showUndo, showInfo, showError } = useToast()
   const offline = useOffline()
 
-  /** Si se ha terminado la última unidad de un producto que no está en la lista: "¿Añadir a la lista?". */
+  /**
+   * Si se ha terminado lo último de uno o varios productos (una receta puede gastar varios) que no
+   * están en la lista: "Se ha acabado: X." con "A la lista".
+   */
   async function finishedQuestion(before: InventoryData | undefined): Promise<{ text: string; action: ToastAction } | null> {
-    const [product] = emptiedProducts(before, queryClient.getQueryData<InventoryData>(inventoryKey(houseId)))
-    if (!product) return null
+    const emptied = emptiedProducts(before, queryClient.getQueryData<InventoryData>(inventoryKey(houseId)))
+    if (emptied.length === 0) return null
     const list = await queryClient.ensureQueryData({ queryKey: shoppingKey(houseId), queryFn: () => fetchShopping(houseId) }).catch(() => [])
-    if (isOnList(list, product)) return null
+    const products = emptied.filter((product) => !isOnList(list, product))
+    if (products.length === 0) return null
 
+    const language = i18n.resolvedLanguage ?? 'es'
     const catalog = new Map((queryClient.getQueryData<CatalogItem[]>(['catalog']) ?? []).map((item) => [item.id, item]))
-    const name = productName(product, catalog, i18n.resolvedLanguage ?? 'es')
+    const names = products.map((product) => productName(product, catalog, language))
+    const joined = new Intl.ListFormat(language, { type: 'conjunction' }).format(names)
     return {
-      text: t('toast.finishedAsk', { name }),
+      text: products.length === 1 ? t('toast.finishedAsk', { name: joined }) : t('toast.finishedAskMany', { names: joined }),
       action: {
         label: t('toast.addToList'),
         run: async () => {
-          await addShoppingItem(queryClient, { houseId, productId: product.id, name, origin: 'finished' })
-          showInfo(t('toast.addedToList', { name }))
+          for (const [index, product] of products.entries()) {
+            await addShoppingItem(queryClient, { houseId, productId: product.id, name: names[index], origin: 'finished' })
+          }
+          showInfo(products.length === 1 ? t('toast.addedToList', { name: joined }) : t('toast.addedToListMany', { names: joined }))
         },
       },
     }

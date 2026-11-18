@@ -8,7 +8,7 @@ import { useDateContext } from '../data/context'
 import { useActiveHouseId } from '../data/house'
 import { addDays, formatLongDay, formatTime, todayIn } from '../domain/dates'
 import type { CatalogById } from '../domain/inventory'
-import { formatPercent, formatQuantity } from '../domain/quantity'
+import { formatNumber, formatPercent, formatQuantity } from '../domain/quantity'
 import type { BulkUnit, QuantityKind, ZoneKind } from '../domain/types'
 import { supabase } from '../lib/supabase'
 
@@ -21,8 +21,24 @@ interface TicketItem {
   catalog_item_id: string | null
 }
 
+/** Lo que gastó una receta, en la unidad del inventario. */
+interface RecipeUsed {
+  name: string
+  catalog_item_id: string | null
+  amount: number
+  quantity_kind: QuantityKind
+  unit_label: string
+  bulk_unit: BulkUnit | null
+  content_amount: number | null
+  content_unit: string | null
+}
+
 interface MovementDetails {
   amount?: number
+  /** He cocinado esto: la receta, lo gastado y el táper con lo que sobró. */
+  recipe?: string
+  used?: RecipeUsed[]
+  dish?: { servings: number; zone: ZoneKind; container_number: number } | null
   /** Ticket aplicado: la tienda, cuántos productos y cuáles. */
   store?: string | null
   count?: number
@@ -86,6 +102,7 @@ function movementText(movement: Movement, catalog: CatalogById, t: TFunction, ta
     case 'discarded':
       return t('movements.types.discarded', { count: amount, qty, name })
     case 'cooked':
+      if (details.recipe) return t('movements.types.recipe', { name: details.recipe })
       return t('movements.types.cooked', { number: details.container_number, name, qty })
     case 'ticket_applied':
       return details.store
@@ -104,6 +121,26 @@ function ticketItems(items: TicketItem[], catalog: CatalogById, language: string
       return entry ? (language === 'en' ? entry.name_en : entry.name_es) : item.name
     })
     .join(', ')
+}
+
+/** "Huevos (4 huevos), Leche (0,25 l) · Sobró: táper #3 (2 raciones)". */
+function recipeDetails(details: MovementDetails, catalog: CatalogById, t: TFunction, tag: string, language: string): string | null {
+  const used = (details.used ?? []).map((item) => {
+    const entry = item.catalog_item_id ? catalog.get(item.catalog_item_id) : undefined
+    const name = entry ? (language === 'en' ? entry.name_en : entry.name_es) : item.name
+    // Los envases se gastan por partes: mejor "0,25 l" que "0,25 bricks".
+    const qty =
+      item.quantity_kind === 'divisible' && item.content_amount && item.content_unit
+        ? `${formatNumber(item.amount * item.content_amount, tag)} ${t(`contentUnits.${item.content_unit as 'g'}`)}`
+        : formatQuantity(item.amount, item, t, tag)
+    return t('movements.recipeItem', { name, qty })
+  })
+  const parts = used.length > 0 ? [used.join(', ')] : []
+  if (details.dish) {
+    const servings = formatQuantity(details.dish.servings, { quantity_kind: 'count', unit_label: 'serving', bulk_unit: null }, t, tag)
+    parts.push(t('movements.recipeDish', { number: details.dish.container_number, qty: servings }))
+  }
+  return parts.length > 0 ? parts.join(' · ') : null
 }
 
 export function MovementsPage() {
@@ -156,6 +193,7 @@ export function MovementsPage() {
                     {movement.details.items && movement.details.items.length > 0 && (
                       <p className="text-sm text-ink-muted">{ticketItems(movement.details.items, catalog.byId, language)}</p>
                     )}
+                    {movement.details.recipe && <p className="text-sm text-ink-muted">{recipeDetails(movement.details, catalog.byId, t, tag, language)}</p>}
                   </div>
                   <time className="shrink-0 text-xs text-ink-muted">{formatTime(movement.created_at, tag, timezone)}</time>
                 </li>

@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
@@ -305,7 +306,7 @@ function ShoppingButton({ product, name, finished }: { product: Product; name: s
   )
 }
 
-function groupTitle(lot: Lot, t: ReturnType<typeof useTranslation>['t'], tag: string, today: string) {
+function groupTitle(lot: Lot, t: TFunction, tag: string, today: string) {
   if (lot.cooked_at) return t('product.cookedOn', { date: formatDate(lot.cooked_at, tag, today) })
   if (!lot.printed_date) return t('product.noDate')
   const date = formatDate(lot.printed_date, tag, today)

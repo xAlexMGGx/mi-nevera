@@ -414,6 +414,10 @@ import_map = "./functions/read-date/deno.json"
 verify_jwt = false
 import_map = "./functions/match-product/deno.json"
 
+[functions.suggest-recipes]
+verify_jwt = false
+import_map = "./functions/suggest-recipes/deno.json"
+
 [analytics]
 enabled = true
 port = 54327

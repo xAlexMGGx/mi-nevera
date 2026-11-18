@@ -135,8 +135,9 @@ Nombres orientativos; Claude Code puede ajustarlos manteniendo el significado. T
 - **`private.digest_log`** (fase 3): `user_id`, `house_id`, `day`. Lo ya avisado, para no repetir el aviso diario.
 - **`private.ai_usage`** (fase 4): `user_id`, `day`, `kind` (`receipt`|`date`|`product`), `count`. Lecturas con IA de cada persona y día, para el límite diario (20 tickets, 150 fechas y 100 códigos nuevos).
 - **`shopping_items`** (fase 6): `house_id`, `product_id` (nullable), `name`, `quantity_text`, `preferred_brand`, `checked`, `checked_at`, `origin` (`manual`|`finished`|`recipe`).
-- **`recipe_favorites`** (fase 7): `user_id`, `house_id`, `title`, `recipe jsonb`.
-- **`recipe_blocked`** (fase 7): `user_id`, `title_normalized`.
+- **`recipe_favorites`** (fase 7): `user_id`, `house_id` (dónde se guardó; si se borra la casa, queda vacío), `title`, `title_normalized`, `recipe jsonb`. Una por título y persona.
+- **`recipe_blocked`** (fase 7): `user_id`, `title`, `title_normalized`. Una por título y persona.
+- **`private.ai_usage`** cuenta también las sugerencias de recetas (`kind` `recipe`, 20 al día).
 
 ### 5.6 Seguridad (RLS)
 
@@ -166,7 +167,8 @@ Todas validan pertenencia a la casa, son atómicas, registran un `movement` y de
 | `apply_ticket(house_id, lines, purchased_at?, store?)` | Aplica las líneas confirmadas de la preview y guarda alias. Todas en una sola operación, con un único movimiento `ticket_applied` que se deshace entero (alias y lo tachado de la lista de la compra incluidos) |
 | `match_ticket_lines(house_id, raw_texts)` | Las líneas de ticket que la casa ya conoce por sus alias. La usa `parse-receipt`. No registra movimiento |
 | `claim_ai_use(kind)` | Cuenta una lectura con IA de quien llama y dice si cabe en su límite del día. La usan `parse-receipt`, `read-date` y `match-product` |
-| `cook_recipe(payload)` | Aplica los descuentos confirmados y, opcionalmente, crea táper |
+| `cook_recipe(house_id, title, items, dish?)` | Aplica los descuentos confirmados (`items`: producto y cantidad en su unidad, también partes de un envase) por FEFO y, opcionalmente, crea el táper con lo que sobró. Un único movimiento `cooked` con la receta, lo gastado y el táper, que se deshace entero |
+| `save_recipe_favorite(house_id, recipe)` / `delete_recipe_favorite(id)` / `block_recipe(title)` / `unblock_recipe(id)` | Favoritas y recetas bloqueadas de quien llama. No registran movimiento |
 | `undo_movement(movement_id)` | Restaura el estado previo guardado en `undo_state`. Solo movimientos de los últimos 2 minutos. Se rechaza si un movimiento posterior tocó los mismos lotes, para no pisar el cambio de otra persona. Si se deshace, el movimiento desaparece del historial. Un movimiento entre casas se deshace desde su salida (`moved_out`), que deshace también la entrada |
 | `create_invite(house_id)` / `revoke_invite(invite_id)` | Crean o anulan una invitación. Solo el propietario. No registran movimiento |
 | `join_house(code)` | Entra como editor con un código válido, lo gasta y deja la casa activa. Quien ya es miembro no lo gasta |
@@ -463,7 +465,7 @@ Al asignar un código a un lote o a una línea del ticket, el producto ya está 
 - Al aplicar un ticket, las líneas emparejadas se marcan como compradas.
 
 **Cómo quedó (fase 6):**
-- Pestaña **Compra** en la barra inferior, con el número de cosas pendientes. El hueco de Recetas sigue reservado a la derecha.
+- Pestaña **Compra** en la barra inferior, con el número de cosas pendientes.
 - Arriba, un campo para escribir qué hace falta y otro, corto, para la cantidad ("2", "1 kg", "3 paquetes"). Al escribir aparecen sugerencias de los productos de la casa y del catálogo; tocar una la apunta enlazada a su producto.
 - Lo apuntado a mano se enlaza solo con un producto de la casa si el nombre coincide, y hereda su marca preferida, que se puede cambiar en la propia lista sin tocar la del producto.
 - Lo que ya está pendiente no se repite: avisa "Leche semidesnatada ya estaba en la lista".
@@ -499,6 +501,30 @@ Al asignar un código a un lote o a una línea del ticket, el producto ya está 
 **Preferencias:** texto libre editable en Ajustes ("no me gusta el cilantro", "intento comer menos carne roja"). Sin valoraciones con estrellas.
 
 **Aviso visible** en la pantalla de recetas: las propuestas son generales y hay que comprobar ingredientes, alergias y preparación, especialmente en situaciones como el embarazo. La app no determina si un alimento es seguro.
+
+**Cómo quedó (fase 7):**
+- Pestaña **Recetas** en la barra inferior, con el corazón (Recetas favoritas) y el engranaje arriba. El aviso va encima del formulario.
+- **Deslizador** de 3 posiciones, con una línea que explica cada modo. También se pueden tocar los nombres. Qué significa cada uno para la IA:
+  - Vaciar la nevera: todo gira alrededor de lo que hay, empezando por lo que caduca antes; como mucho 2 cosas que falten, y menores (un condimento).
+  - Equilibrado: sobre todo lo que hay, aprovechando lo que caduca pronto; como mucho 4 cosas que falten.
+  - Inspiración libre: cualquier receta que encaje; lo que haya en casa, si viene bien.
+- Tipo de plato (botones que se marcan, varios a la vez), "Algo más" (texto libre, por ejemplo "sin horno"), personas y tiempo máximo (15 a 90 min). Lo pedido se recuerda en el móvil.
+- **Qué se envía a la IA:** lo que hay en casa con su cantidad, si está abierto, congelado o es un táper, y su fecha más próxima, ordenado por fecha. Lo caducado no se envía. Además, las preferencias, los títulos de las 10 últimas favoritas y los de las bloqueadas, en el idioma de cada persona. No se envía ningún dato personal.
+- **Nada se da por hecho en casa**, ni sal ni aceite: lo que no está en el inventario cuenta como que falta. Solo el agua del grifo no falta.
+- **Respuesta:** además de lo del SPEC, cada ingrediente de casa trae cuánto usa la receta (`use_amount`, en la unidad del producto) para rellenar "He cocinado esto". Lo bloqueado se descarta aunque el modelo lo proponga.
+- **Cada receta:** título, tiempo, raciones, "Aprovecha: Leche, Huevos", ingredientes con ✓ si los hay o "Falta" / "En la lista", y los pasos plegados.
+- Las últimas sugerencias de cada casa se guardan en el móvil: volver a la pantalla no hace otra petición.
+- **"No me la vuelvas a sugerir"** la quita al momento. Se puede deshacer en Ajustes → Preferencias de recetas → "Volver a sugerir".
+- **Favoritas:** personales y visibles desde todas las casas. La lista dice "tienes 4 de 6 ingredientes" según la casa activa. Cada ingrediente guarda el nombre y el producto del catálogo con los que se emparejó, para encontrar el equivalente en otra casa.
+- **Añadir lo que falta a la lista (N):** apunta lo que falta y aún no está en la lista, con la cantidad si lleva números ("200 g" sí, "al gusto" no), con origen `recipe`.
+- **He cocinado esto:**
+  1. Una línea por ingrediente que hay en casa, con casilla para descontarlo o no, la cantidad de la receta ya puesta (editable) y lo que hay. Los litros y kilos se ven en ml y g, como en las recetas. Si se pide más de lo que hay, avisa y descuenta lo que hay. Debajo, lo que no se descuenta porque no está en casa.
+  2. "¿Te han sobrado raciones?": "No, ya está" o "Sí, guardarlas en un táper" con nombre (el de la receta), raciones, Frigo o Congelador, número de recipiente y chip de fecha orientativo, que no se rellena solo.
+  3. Se aplica todo junto con `cook_recipe`, con "Receta cocinada" y Deshacer. Si se acaba algo, "Se ha acabado: X." (o "Se han acabado: X e Y.") con "A la lista".
+- Al cocinar, de un envase se gasta primero lo abierto y, si hace falta una parte de uno cerrado, se abre y queda abierto con el resto. Un táper también puede ser ingrediente: se gasta por raciones.
+- **Historial:** "Se cocinó Tortilla francesa" y, debajo, "Huevos (4 huevos), Leche semidesnatada (100 ml) · Sobró: táper #2 (2 raciones)".
+- **Ajustes → Preferencias de recetas:** texto libre de hasta 500 caracteres y la lista de bloqueadas.
+- **Límite:** 20 sugerencias por persona y día. Los errores de la IA se explican con palabras de recetas.
 
 ---
 
@@ -612,11 +638,22 @@ Cada fase termina con la app desplegada y funcionando. **No empezar la siguiente
 
 ## Estado
 
-**Fase actual:** 6 · Lista de la compra. Código terminado, pendiente de aplicar la migración, publicar y confirmar en el iPhone.
+**Fase actual:** 7 · Recetas. Código terminado, pendiente de aplicar la migración, subir la Edge Function `suggest-recipes`, publicar y confirmar en el iPhone.
 
 ### Hecho
 
-**Fase 6 · Lista de la compra**
+**Fase 7 · Recetas**
+
+- Pestaña Recetas con el aviso, deslizador de 3 modos, tipo de plato, texto libre, personas y tiempo máximo (§14).
+- Edge Function `suggest-recipes` con Claude: inventario sin lo caducado y ordenado por fecha, preferencias, favoritas y bloqueadas; respuesta validada con Zod, emparejada con los productos de la casa y sin las bloqueadas. Límite de 20 al día por persona.
+- Cada receta muestra lo que hay y lo que falta según la casa activa, lo que aprovecha y sus pasos. Las últimas sugerencias se guardan en el móvil.
+- Favoritas personales, visibles desde todas las casas, con su propia pantalla. "No me la vuelvas a sugerir", que se deshace en Ajustes.
+- Añadir lo que falta a la lista de la compra.
+- He cocinado esto: vista previa editable (casillas, cantidades, lo que hay), pregunta de las sobras y táper, todo en un único movimiento con Deshacer. Si se acaba algo, se ofrece apuntarlo.
+- Ajustes → Preferencias de recetas. Mis datos incluye favoritas y bloqueadas.
+- Tests: favoritas y bloqueadas (de cada persona, sin repetir, tras borrar la casa, al eliminar la cuenta), límite diario, `cook_recipe` (por unidades con FEFO, a granel, partes de un envase, envases enteros y una parte, lo casi vacío, menos de lo pedido, líneas repetidas, orden del historial, táper como ingrediente y como sobra, Deshacer, tiempo real, permisos y errores) contra Postgres real; la petición a la IA, la validación y los límites de la respuesta, y la lógica de la app (qué hay y qué falta, favoritas en otra casa, cantidades y unidades al cocinar). La petición a Claude se comprobó en Deno contra una API simulada (versión de API, formato estructurado y esfuerzo), y el recorrido completo en el navegador con dos móviles y respuestas de Claude preparadas.
+
+**Fase 6 · Lista de la compra (confirmada)**
 
 - Pestaña Compra con el número de pendientes, lista por casa compartida y en tiempo real (§13).
 - Apuntar a mano con cantidad libre, con sugerencias de la casa y del catálogo, enlace automático al producto por nombre y sin repetir lo que ya está pendiente.
@@ -704,9 +741,9 @@ Segunda parte, tras la primera prueba del propietario:
 ### Pendiente
 
 - **Revisión del propietario:** comprobar el contenido de conservación con sus fuentes (`src/content/conservation/SOURCES.md`) y poner `reviewed: true` en `review.json`. Faltan los lácteos abiertos, sin fuente accesible.
-- **Fase 6:** aplicar la migración (`npm run db:push`), publicar y comprobar en el iPhone. No hay Edge Functions ni secretos nuevos.
+- **Fase 7:** aplicar la migración (`npm run db:push`), subir las funciones (`npm run functions:deploy`, ahora incluye `suggest-recipes`), publicar y comprobar en el iPhone. Usa los mismos secretos de Anthropic que el ticket; no hay secretos nuevos.
 - **Fotos sin usar:** una foto propia que ya no usa ningún lote ni producto se queda en Storage, aunque nadie más que quien la subió puede verla. No se borra al quitarla, porque un lote dividido o movido comparte la misma foto. Si algún día ocupa demasiado, se puede añadir un limpiador.
-- **Fase 7:** sin empezar, a la espera de confirmación del propietario. El origen `recipe` de la lista ya existe en la base de datos.
+- **Fase 8 · Búsqueda semántica:** sin empezar, a la espera de confirmación del propietario. Antes hay que elegir el proveedor de embeddings (§15).
 - **Fase 9 · Tutorial:** en el backlog (§17). Antes de empezarla, acordar con el propietario los detalles.
 
 ### Decisiones tomadas (2026-11-09)
@@ -788,3 +825,17 @@ Ya incorporadas en las secciones correspondientes del SPEC, salvo las que solo a
 - **El ticket tacha, no borra:** lo comprado queda tachado para revisarlo, y se borra con "Borrar comprados". Añadir a mano o por código no tacha nada: solo el ticket confirma que se ha comprado.
 - **La marca de la lista es del elemento:** al apuntarlo se copia la marca preferida del producto, y cambiarla en la lista no cambia la del producto.
 - **El aviso al acabarse algo** dura 8 segundos en vez de 5, para dar tiempo a decidir. El botón dice "A la lista" y no "Añadir", para no confundirlo con el botón de los formularios de alta, que puede estar en pantalla a la vez.
+
+**Fase 7** (decididas con el propietario el 2026-11-17: favoritas personales en todas sus casas y nada de básicos supuestos)
+
+- **Favoritas personales, visibles en todas las casas de quien las guarda**, y no compartidas con la casa. `house_id` solo dice dónde se guardó.
+- **Nada se da por hecho en casa:** sal, aceite y especias cuentan como que faltan si no están en el inventario. Solo el agua del grifo no cuenta, porque no se compra.
+- **Lo caducado no se envía a la IA**, para que no proponga usarlo: la app no decide si algo se puede comer. Lo de consumo preferente pasado sí se envía, marcado, porque suele seguir siendo comestible y es lo primero que hay que gastar; el aviso de la pantalla pide comprobarlo.
+- **Cantidades para cocinar:** la IA dice cuánto usa de cada producto de casa en su unidad, para rellenar la vista previa. Con otro producto (una favorita en otra casa) no se aprovecha esa cantidad: queda 1 unidad, o vacío si va al peso.
+- **Partes de un envase:** 200 ml de un brick de 1 l abren el brick y lo dejan abierto al 80 %, en vez de gastar un brick entero.
+- **Las sobras se preguntan antes de aplicar:** así lo cocinado y el táper son un único movimiento con un único Deshacer. El SPEC ponía la pregunta después de confirmar; el orden en pantalla es el mismo.
+- **Un táper puede ser ingrediente** (por ejemplo, unas lentejas recalentadas), y se gasta por raciones.
+- **Un movimiento `cooked` con la receta**, en vez de un tipo nuevo: el tipo ya estaba en el SPEC, y el historial distingue la receta del táper suelto.
+- **Modelo:** el mismo `ANTHROPIC_MODEL` que el ticket, con esfuerzo medio (`effort: medium`): basta para proponer recetas, y tarda y cuesta menos que el alto, que es el de Sonnet 5.5 por defecto. Límite de 20 sugerencias por persona y día. No estaba en el SPEC.
+- **Las últimas sugerencias se guardan en el móvil, por casa**, como el borrador del ticket: volver a la pantalla no cuesta otra petición.
+- **"No me la vuelvas a sugerir" no pide confirmación**, porque se deshace en Ajustes.

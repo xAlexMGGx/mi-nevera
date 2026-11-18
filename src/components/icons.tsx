@@ -79,6 +79,25 @@ export function CartIcon() {
   )
 }
 
+/** Recetas: una olla. */
+export function PotIcon() {
+  return (
+    <svg {...shared}>
+      <path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5Z" />
+      <path d="M2 10h20M9 6.5c0-1 1-1.5 1-2.5M14 6.5c0-1 1-1.5 1-2.5" />
+    </svg>
+  )
+}
+
+/** Favorita: relleno cuando ya lo es. */
+export function HeartIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg {...shared} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M19.5 12.6 12 20l-7.5-7.4A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 7.5 6.2Z" />
+    </svg>
+  )
+}
+
 /** Tarjetas en dos columnas. */
 export function GridIcon() {
   return (

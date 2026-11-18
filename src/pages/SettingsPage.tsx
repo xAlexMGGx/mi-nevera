@@ -87,6 +87,7 @@ export function SettingsPage() {
           </Card>
           <SettingsLink to="/houses" label={t('houses.title')} />
           <SettingsLink to="/notifications" label={t('notifications.title')} />
+          <SettingsLink to="/settings/recipes" label={t('recipePrefs.title')} />
           <SettingsLink to="/conservation" label={t('conservation.title')} />
           <SettingsLink to="/movements" label={t('movements.title')} />
           <SettingsLink to="/my-data" label={t('myData.title')} />

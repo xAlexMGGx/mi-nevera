@@ -26,7 +26,8 @@
     "add": "Add",
     "shopping": "Shopping",
     "shoppingPending_one": "Shopping, {{count}} to buy",
-    "shoppingPending_other": "Shopping, {{count}} to buy"
+    "shoppingPending_other": "Shopping, {{count}} to buy",
+    "recipes": "Recipes"
   },
   "zones": {
     "fridge": "Fridge",
@@ -215,6 +216,105 @@
     "clearBody_one": "{{count}} ticked item will be removed from the list.",
     "clearBody_other": "The {{count}} ticked items will be removed from the list.",
     "clearSubmit": "Clear bought"
+  },
+  "recipes": {
+    "title": "Recipes",
+    "notice": "Recipes are general suggestions. Check the ingredients, allergies and preparation, especially in situations such as pregnancy. The app does not determine whether a food is safe.",
+    "favorites": "Favorite recipes",
+    "mode": "Which recipes",
+    "modes": {
+      "use_up": "Empty the fridge",
+      "balanced": "Balanced",
+      "free": "Free inspiration"
+    },
+    "modeHints": {
+      "use_up": "With what you have, starting with what expires first. At most a seasoning may be missing.",
+      "balanced": "Mostly with what you have; a few things may be missing.",
+      "free": "Any recipe: whatever is missing goes to the shopping list."
+    },
+    "filters": "Type of dish",
+    "filter": {
+      "pasta": "Pasta",
+      "rice": "Rice",
+      "legumes": "Legumes",
+      "salad": "Salad",
+      "meat": "Meat",
+      "fish": "Fish",
+      "vegetables": "Vegetables",
+      "light_dinner": "Light dinner",
+      "dessert": "Dessert"
+    },
+    "extra": "Anything else (optional)",
+    "extraPlaceholder": "For example: no oven",
+    "servings": "People",
+    "anyServings": "Any",
+    "maxTime": "Maximum time",
+    "anyTime": "No limit",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "suggest": "Suggest",
+    "thinking": "Thinking of recipes…",
+    "thinkingHint": "It usually takes less than a minute.",
+    "suggestions": "Suggestions",
+    "noRecipes": "No recipes came out this time. Try again or change the filters.",
+    "meta_one": "{{minutes}} min · {{count}} serving",
+    "meta_other": "{{minutes}} min · {{count}} servings",
+    "usesExpiring": "Uses up: {{names}}",
+    "ingredients": "Ingredients",
+    "have": "You have it",
+    "missing": "Missing",
+    "onList": "On the list",
+    "steps_one": "See the step",
+    "steps_other": "See the {{count}} steps",
+    "favorite": "Favorite",
+    "block": "Don't suggest it again",
+    "blocked": "{{title}}: won't be suggested again",
+    "addMissing_one": "Add what's missing to the list ({{count}})",
+    "addMissing_other": "Add what's missing to the list ({{count}})",
+    "addedMissing_one": "{{count}} thing added to the list.",
+    "addedMissing_other": "{{count}} things added to the list.",
+    "allOnList": "What's missing is already on the list.",
+    "cook": "I cooked this",
+    "errors": {
+      "ai_not_configured": "AI recipes are not set up yet.",
+      "ai_no_credit": "The AI credit has run out. Tell whoever manages the app.",
+      "ai_quota": "You've reached today's limit of 20 suggestions. You can ask for more tomorrow.",
+      "ai_unavailable": "The recipe service isn't responding right now. Try again in a moment.",
+      "ai_unreadable": "No recipes came out this time. Try again."
+    },
+    "favoritesTitle": "Favorite recipes",
+    "favoritesEmpty": "You have no favorite recipes yet. Tap the heart on a recipe to save it here.",
+    "haveCount": "you have {{have}} of {{total}} ingredients",
+    "favoriteGone": "This recipe is no longer in your favorites.",
+    "cookTitle": "I cooked this",
+    "cookIntro": "Check what will be taken from home. Unticked lines are not subtracted.",
+    "cookList": "What will be subtracted",
+    "cookDiscount": "Subtract {{name}}",
+    "cookAmount": "Amount of {{name}}",
+    "cookRecipeSays": "Recipe: {{amount}}",
+    "cookAvailable": "Available: {{amount}}",
+    "cookMore": "Only {{amount}} left: whatever there is will be subtracted.",
+    "cookInvalid": "Write an amount.",
+    "cookNotHome": "Not subtracted, because it is not at home: {{names}}.",
+    "cookNothing": "There's nothing from home to subtract.",
+    "next": "Next",
+    "leftoversQuestion": "Any servings left over?",
+    "leftoversNo": "No, that's it",
+    "leftoversYes": "Yes, keep them in a container",
+    "leftoversName": "Container name",
+    "saveCooked": "Save",
+    "back": "Back"
+  },
+  "recipePrefs": {
+    "title": "Recipe preferences",
+    "intro": "The AI takes them into account in every suggestion. Only you see them.",
+    "preferences": "Your preferences",
+    "placeholder": "For example: I don't like coriander; I try to eat less red meat.",
+    "counter": "{{length}} of {{max}} characters",
+    "blockedTitle": "Recipes you don't want suggested",
+    "blockedEmpty": "None. On a recipe, “Don't suggest it again” adds it here.",
+    "unblock": "Suggest again",
+    "unblockLabel": "Suggest {{title}} again"
   },
   "shelfLife": {
     "chip": "Guide: {{period}}",
@@ -658,8 +758,11 @@
       "ticket_other": "A receipt with {{count}} products was added",
       "ticketFrom_one": "A {{store}} receipt with {{count}} product was added",
       "ticketFrom_other": "A {{store}} receipt with {{count}} products was added",
-      "other": "Change to {{name}}"
-    }
+      "other": "Change to {{name}}",
+      "recipe": "Cooked {{name}}"
+    },
+    "recipeItem": "{{name}} ({{qty}})",
+    "recipeDish": "Leftovers: container #{{number}} ({{qty}})"
   },
   "toast": {
     "undo": "Undo",
@@ -678,7 +781,10 @@
     "ticket": "Receipt added",
     "finishedAsk": "{{name}} has run out.",
     "addToList": "Add to list",
-    "addedToList": "{{name}}: added to the list"
+    "addedToList": "{{name}}: added to the list",
+    "recipe": "Recipe cooked",
+    "finishedAskMany": "{{names}} have run out.",
+    "addedToListMany": "Added to the list: {{names}}"
   },
   "errors": {
     "not_member": "You don't belong to this home.",

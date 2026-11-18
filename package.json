@@ -19,7 +19,7 @@
     "db:types": "supabase gen types --lang=typescript --remote --schema public > src/lib/database.types.ts",
     "shelf-life:migration": "node scripts/buildShelfLifeMigration.ts",
     "push:keys": "node scripts/generateVapidKeys.ts",
-    "functions:deploy": "supabase functions deploy daily-digest send-test-push parse-receipt read-date match-product --use-api"
+    "functions:deploy": "supabase functions deploy daily-digest send-test-push parse-receipt read-date match-product suggest-recipes --use-api"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

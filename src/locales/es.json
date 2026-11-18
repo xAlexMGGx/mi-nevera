@@ -26,7 +26,8 @@
     "add": "Añadir",
     "shopping": "Compra",
     "shoppingPending_one": "Compra, {{count}} pendiente",
-    "shoppingPending_other": "Compra, {{count}} pendientes"
+    "shoppingPending_other": "Compra, {{count}} pendientes",
+    "recipes": "Recetas"
   },
   "zones": {
     "fridge": "Frigo",
@@ -215,6 +216,105 @@
     "clearBody_one": "Se quitará de la lista {{count}} cosa tachada.",
     "clearBody_other": "Se quitarán de la lista las {{count}} cosas tachadas.",
     "clearSubmit": "Borrar comprados"
+  },
+  "recipes": {
+    "title": "Recetas",
+    "notice": "Las recetas son propuestas generales. Comprueba los ingredientes, las alergias y la preparación, sobre todo en situaciones como el embarazo. La app no determina si un alimento es seguro.",
+    "favorites": "Recetas favoritas",
+    "mode": "Qué recetas",
+    "modes": {
+      "use_up": "Vaciar la nevera",
+      "balanced": "Equilibrado",
+      "free": "Inspiración libre"
+    },
+    "modeHints": {
+      "use_up": "Con lo que tienes, empezando por lo que caduca antes. Como mucho falta algún condimento.",
+      "balanced": "Sobre todo con lo que tienes; puede faltar alguna cosa.",
+      "free": "Cualquier receta: lo que falte, a la lista de la compra."
+    },
+    "filters": "Tipo de plato",
+    "filter": {
+      "pasta": "Pasta",
+      "rice": "Arroz",
+      "legumes": "Legumbres",
+      "salad": "Ensalada",
+      "meat": "Carne",
+      "fish": "Pescado",
+      "vegetables": "Verdura",
+      "light_dinner": "Cena ligera",
+      "dessert": "Postre"
+    },
+    "extra": "Algo más (opcional)",
+    "extraPlaceholder": "Por ejemplo: sin horno",
+    "servings": "Personas",
+    "anyServings": "Sin indicar",
+    "maxTime": "Tiempo máximo",
+    "anyTime": "Sin límite",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "suggest": "Sugerir",
+    "thinking": "Pensando recetas…",
+    "thinkingHint": "Suele tardar menos de un minuto.",
+    "suggestions": "Sugerencias",
+    "noRecipes": "No han salido recetas esta vez. Vuelve a probar o cambia los filtros.",
+    "meta_one": "{{minutes}} min · {{count}} ración",
+    "meta_other": "{{minutes}} min · {{count}} raciones",
+    "usesExpiring": "Aprovecha: {{names}}",
+    "ingredients": "Ingredientes",
+    "have": "Lo tienes",
+    "missing": "Falta",
+    "onList": "En la lista",
+    "steps_one": "Ver el paso",
+    "steps_other": "Ver los {{count}} pasos",
+    "favorite": "Favorita",
+    "block": "No me la vuelvas a sugerir",
+    "blocked": "{{title}}: no se volverá a sugerir",
+    "addMissing_one": "Añadir lo que falta a la lista ({{count}})",
+    "addMissing_other": "Añadir lo que falta a la lista ({{count}})",
+    "addedMissing_one": "Se ha añadido {{count}} cosa a la lista.",
+    "addedMissing_other": "Se han añadido {{count}} cosas a la lista.",
+    "allOnList": "Lo que falta ya está en la lista.",
+    "cook": "He cocinado esto",
+    "errors": {
+      "ai_not_configured": "Las recetas con IA todavía no están configuradas.",
+      "ai_no_credit": "Se ha acabado el crédito de la IA. Avisa a quien administra la app.",
+      "ai_quota": "Has llegado al límite de 20 sugerencias de hoy. Mañana podrás pedir más.",
+      "ai_unavailable": "El servicio de recetas no responde ahora mismo. Vuelve a probar en un momento.",
+      "ai_unreadable": "No han salido recetas esta vez. Vuelve a probar."
+    },
+    "favoritesTitle": "Recetas favoritas",
+    "favoritesEmpty": "Aún no tienes recetas favoritas. Toca el corazón de una receta para guardarla aquí.",
+    "haveCount": "tienes {{have}} de {{total}} ingredientes",
+    "favoriteGone": "Esta receta ya no está en tus favoritas.",
+    "cookTitle": "He cocinado esto",
+    "cookIntro": "Revisa lo que se va a descontar de casa. Lo desmarcado no se descuenta.",
+    "cookList": "Lo que se descuenta",
+    "cookDiscount": "Descontar {{name}}",
+    "cookAmount": "Cantidad de {{name}}",
+    "cookRecipeSays": "Receta: {{amount}}",
+    "cookAvailable": "Hay {{amount}}",
+    "cookMore": "Solo hay {{amount}}: se descontará lo que hay.",
+    "cookInvalid": "Escribe una cantidad.",
+    "cookNotHome": "No se descuenta, porque no está en casa: {{names}}.",
+    "cookNothing": "No hay nada de casa que descontar.",
+    "next": "Siguiente",
+    "leftoversQuestion": "¿Te han sobrado raciones?",
+    "leftoversNo": "No, ya está",
+    "leftoversYes": "Sí, guardarlas en un táper",
+    "leftoversName": "Nombre del táper",
+    "saveCooked": "Guardar",
+    "back": "Atrás"
+  },
+  "recipePrefs": {
+    "title": "Preferencias de recetas",
+    "intro": "La IA las tiene en cuenta en cada sugerencia. Solo las ves tú.",
+    "preferences": "Tus preferencias",
+    "placeholder": "Por ejemplo: no me gusta el cilantro; intento comer menos carne roja.",
+    "counter": "{{length}} de {{max}} caracteres",
+    "blockedTitle": "Recetas que no quieres que te sugiera",
+    "blockedEmpty": "Ninguna. En una receta, «No me la vuelvas a sugerir» la añade aquí.",
+    "unblock": "Volver a sugerir",
+    "unblockLabel": "Volver a sugerir {{title}}"
   },
   "shelfLife": {
     "chip": "Orientativo: {{period}}",
@@ -658,8 +758,11 @@
       "ticket_other": "Se añadió un ticket con {{count}} productos",
       "ticketFrom_one": "Se añadió un ticket de {{store}} con {{count}} producto",
       "ticketFrom_other": "Se añadió un ticket de {{store}} con {{count}} productos",
-      "other": "Cambio en {{name}}"
-    }
+      "other": "Cambio en {{name}}",
+      "recipe": "Se cocinó {{name}}"
+    },
+    "recipeItem": "{{name}} ({{qty}})",
+    "recipeDish": "Sobró: táper #{{number}} ({{qty}})"
   },
   "toast": {
     "undo": "Deshacer",
@@ -678,7 +781,10 @@
     "ticket": "Ticket añadido",
     "finishedAsk": "Se ha acabado: {{name}}.",
     "addToList": "A la lista",
-    "addedToList": "{{name}}: añadido a la lista"
+    "addedToList": "{{name}}: añadido a la lista",
+    "recipe": "Receta cocinada",
+    "finishedAskMany": "Se han acabado: {{names}}.",
+    "addedToListMany": "Añadidos a la lista: {{names}}"
   },
   "errors": {
     "not_member": "No perteneces a esta casa.",

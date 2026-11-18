@@ -17,6 +17,10 @@ import { MovementsPage } from './pages/MovementsPage'
 import { MyDataPage } from './pages/MyDataPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ProductPage } from './pages/ProductPage'
+import { RecipePreferencesPage } from './pages/RecipePreferencesPage'
+import { CookRecipePage } from './pages/recipes/CookRecipePage'
+import { FavoritePage, FavoritesPage } from './pages/recipes/FavoritesPage'
+import { RecipesPage } from './pages/recipes/RecipesPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -56,7 +60,12 @@ export function App() {
           <Route index element={<InventoryPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/shopping" element={<ShoppingPage />} />
+          <Route path="/recipes" element={<RecipesPage />} />
         </Route>
+        <Route path="/recipes/favorites" element={<FavoritesPage />} />
+        <Route path="/recipes/favorites/:id" element={<FavoritePage />} />
+        <Route path="/recipes/cook" element={<CookRecipePage />} />
+        <Route path="/settings/recipes" element={<RecipePreferencesPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/conservation" element={<ConservationPage />} />
         <Route path="/add" element={<AddPage />} />
